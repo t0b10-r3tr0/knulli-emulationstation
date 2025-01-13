@@ -768,7 +768,7 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 		LOG(LogInfo) << "Quick resume not enabled. Ignoring global.bootgame settings in batoecera.conf.";
 		logMessage.append("\nQuick resume not enabled. Ignoring global.bootgame settings in batoecera.conf.");
 	}
-	else if (Utils::FileSystem::exists("/var/run/shutdown-ingame.flag"))
+	else if (Utils::FileSystem::exists("/var/run/shutdown.flag"))
 	{
 		// exiting due to power event - preserving batocera.conf settings for global.bootgame command and path
 		LOG(LogInfo) << "Quick Resume enabled and shutting down in-game. Preserved global.bootgame settings in batocera.conf. ";
