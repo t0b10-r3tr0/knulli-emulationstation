@@ -37,7 +37,7 @@
 using namespace Utils::Platform;
 
 // KNULLI - QUICK RESUME MODE - logging will be cleaned up after testing >>>>>
-const std::string logFile = "/userdata/system/logs/quick-resume.log";
+// const std::string logFile = "/userdata/system/logs/quick-resume.log";
 // KNULLI - QUICK RESUME MODE <<<<<
 
 static std::map<std::string, std::function<BindableProperty(FileData*)>> properties =
@@ -754,6 +754,7 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 		Utils::FileSystem::removeFile(p2kConv);
 
 	// KNULLI: QUICK RESUME MODE - logging will be cleaned up after testing >>>
+	std::string logFile = "/userdata/system/logs/quick-resume.log";
 	std::string logMessage = "";
 	logMessage.append("\nnow exiting game. processing quick resume settings.");
 
@@ -782,7 +783,8 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	}
 
 	// write out the debug log to assist with testing
-	Utils::FileSystem::writeAllText("/userdata/system/logs/quick-resume-testing.log", logMessage);
+	std::string existingLog = Utils::FileSystem::readAllText(logFile).append("\n\n");
+	Utils::FileSystem::writeAllText(logFile, existingLog.append(logMessage));
 	// KNULLI - QUICK RESUME MODE <<<
 
 	Scripting::fireEvent("game-end");
