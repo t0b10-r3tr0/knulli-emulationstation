@@ -760,19 +760,19 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 
 	std::string logFile = "/userdata/system/logs/quick-resume.log";
 	std::string logMessage = "";
-	logMessage.append("\nnow exiting game. processing quick resume settings.");
+	logMessage.append("Now exiting game. processing quick resume settings.");
 
 	if (!quickResume)
 	{
 		// quick resume is not enabled, not preserving  batocera.conf settings
 		LOG(LogInfo) << "Quick resume not enabled. Ignoring global.bootgame settings in batoecera.conf.";
-		logMessage.append("\nQuick resume not enabled. Ignoring global.bootgame settings in batoecera.conf.");
+		logMessage.append("Quick resume not enabled. Ignoring global.bootgame settings in batoecera.conf.");
 	}
 	else if (Utils::FileSystem::exists("/var/run/shutdown.flag"))
 	{
 		// exiting due to power event - preserving batocera.conf settings for global.bootgame command and path
-		LOG(LogInfo) << "Quick Resume enabled and shutting down in-game. Preserved global.bootgame settings in batocera.conf. ";
-		logMessage.append("\nQuick Resume enabled and shutting down in-game. Preserved global.bootgame settings in batocera.conf. ");
+		LOG(LogInfo) << "Quick Resume enabled and shutting down in-game. Preserved global.bootgame settings in batocera.conf.";
+		logMessage.append("Quick Resume enabled and shutting down in-game. Preserved global.bootgame settings in batocera.conf.");
 	}
 	else
 	{
@@ -782,8 +782,8 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 		SystemConf::getInstance()->saveSystemConf();
 
 		// log the output
-		LOG(LogInfo) << "Quick resume enabled and not shutting down in-game. Cleared global.bootgame settings from batocera.conf. ";
-		logMessage.append("\nQuick resume enabled and not shutting down in-game. Cleared global.bootgame settings from batocera.conf. ");
+		LOG(LogInfo) << "Quick resume enabled and not shutting down in-game. Cleared global.bootgame settings from batocera.conf.";
+		logMessage.append("Quick resume enabled and not shutting down in-game. Cleared global.bootgame settings from batocera.conf.");
 	}
 
 	// write out the debug log to assist with testing
