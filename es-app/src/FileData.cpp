@@ -712,6 +712,8 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 		SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
 		SystemConf::getInstance()->saveSystemConf();
 	}
+
+	Utils::FileSystem:: writeAllText("/var/run/game_running.flag");
 	// KNULLI - QUICK RESUME MODE <<<<<
 
 	AudioManager::getInstance()->deinit();
@@ -754,6 +756,8 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 		Utils::FileSystem::removeFile(p2kConv);
 
 	// KNULLI: QUICK RESUME MODE - logging will be cleaned up after testing >>>
+	Utils::FileSystem::removeFile("/var/run/game_running.flag");
+
 	std::string logFile = "/userdata/system/logs/quick-resume.log";
 	std::string logMessage = "";
 	logMessage.append("\nnow exiting game. processing quick resume settings.");
@@ -783,7 +787,7 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	}
 
 	// write out the debug log to assist with testing
-	std::string existingLog = Utils::FileSystem::readAllText(logFile).append("\n\n");
+	std::string existingLog = Utils::FileSystem::readAllText(logFile).append("\n");
 	Utils::FileSystem::writeAllText(logFile, existingLog.append(logMessage));
 	// KNULLI - QUICK RESUME MODE <<<
 
