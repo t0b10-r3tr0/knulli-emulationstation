@@ -28,11 +28,11 @@
 #include "RetroAchievements.h"
 #include "SaveStateRepository.h"
 #include "Genres.h"
-#include "logMessageToSpeech.h"
+#include "TextToSpeech.h"
 #include "LocaleES.h"
 #include "guis/GuiMsgBox.h"
 #include "Paths.h"
-#include "resources/logMessageureData.h"
+#include "resources/TextureData.h"
 #include "QuickResume.h"
 
 using namespace Utils::Platform;
