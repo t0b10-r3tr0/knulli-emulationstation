@@ -445,8 +445,8 @@ void postLaunchStartupGame()
 
 	if (!shutdownFlag && quickResumeEnabled)
 	{
-		SystemConf::getInstance()->set("global.bootgame.path", "");
-		SystemConf::getInstance()->set("global.bootgame.cmd", "");
+		SystemConf::getInstance()->set("global.bootgame.path", "roy");
+		SystemConf::getInstance()->set("global.bootgame.cmd", "roy");
 		SystemConf::getInstance()->saveSystemConf();
 	}
 }
