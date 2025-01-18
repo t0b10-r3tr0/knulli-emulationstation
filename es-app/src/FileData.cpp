@@ -703,16 +703,12 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 
 	// KNULLI - QUICK RESUME MODE >>>>>
 	bool quickResume = SystemConf::getInstance()->getBool("global.quickresume") == true;
-	std::string quickResumeCommand = getlaunchCommand(false);
-	std::string quickResumePath = getFullPath();
 
-	// check if quick resume is enabled and the command and path contain data
-	if (QuickResume::quickResumeEnabled() && !(quickResumeCommand.empty() || quickResumePath.empty()))
-	{
-		SystemConf::getInstance()->set("global.bootgame.path", getlaunchCommand(false));
-		SystemConf::getInstance()->set("global.bootgame.cmd", getFullPath());
-		SystemConf::getInstance()->saveSystemConf();
-	}
+		// check if quick resume is enabled and the command and path contain data
+	// if (QuickResume::quickResumeEnabled)
+	// {
+		QuickResume::setQuickResume(getlaunchCommand(false), getFullPath());
+	// }
 	// KNULLI - QUICK RESUME MODE <<<<<
 
 	AudioManager::getInstance()->deinit();
