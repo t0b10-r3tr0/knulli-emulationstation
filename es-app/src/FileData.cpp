@@ -763,29 +763,26 @@ bool FileData::launchGame(Window *window, LaunchGameOptions options)
 	Scripting::fireEvent("game-end");
 
 	// KNULLI: QUICK RESUME MODE >>>>>
-	std::string logFile = "~/main.log";
-	std::string logMessage;
-
 	bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 
 	std::string text = "";
 
 	if (shutDownFlag)
 	{
-		text += "shutdown flag\n";
+		text += "shutdown flag. ";
 	}
 	else
 	{
-		text += "no shutdown flag";
+		text += "no shutdown flag. ";
 	}
 
 	if (QuickResume::quickResumeEnabled())
 	{
-		text += "qr enabled\n";
+		text += "qr enabled. ";
 	}
 	else
 	{
-		text += "qr not enabled\n";
+		text += "qr not enabled. ";
 	}
 
 	if (QuickResume::quickResumeEnabled() && !shutDownFlag)
