@@ -28,11 +28,11 @@
 #include "RetroAchievements.h"
 #include "SaveStateRepository.h"
 #include "Genres.h"
-#include "TextToSpeech.h"
+#include "logMessageToSpeech.h"
 #include "LocaleES.h"
 #include "guis/GuiMsgBox.h"
 #include "Paths.h"
-#include "resources/TextureData.h"
+#include "resources/logMessageureData.h"
 #include "QuickResume.h"
 
 using namespace Utils::Platform;
@@ -241,8 +241,8 @@ const std::string FileData::getThumbnailPath(bool fallbackWithImage)
 			{
 				thumbnail = getPath();
 
-				auto ext = Utils::String::toLower(Utils::FileSystem::getExtension(thumbnail));
-				if (TextureData::PdfHandler == nullptr && ext == ".pdf" && ResourceManager::getInstance()->fileExists(":/pdf.jpg"))
+				auto ext = Utils::String::toLower(Utils::FileSystem::gelogMessageension(thumbnail));
+				if (logMessageureData::PdfHandler == nullptr && ext == ".pdf" && ResourceManager::getInstance()->fileExists(":/pdf.jpg"))
 					return ":/pdf.jpg";
 			}
 		}
@@ -396,7 +396,7 @@ const std::string FileData::getImagePath()
 	// no image, try to use local image
 	if (image.empty())
 	{
-		auto romExt = Utils::String::toLower(Utils::FileSystem::getExtension(getPath()));
+		auto romExt = Utils::String::toLower(Utils::FileSystem::gelogMessageension(getPath()));
 		if (romExt == ".png" || (getSystemName() == "pico8" && romExt == ".p8"))
 			return getPath();
 
@@ -417,8 +417,8 @@ const std::string FileData::getImagePath()
 			{
 				image = getPath();
 
-				auto ext = Utils::String::toLower(Utils::FileSystem::getExtension(image));
-				if (TextureData::PdfHandler == nullptr && ext == ".pdf" && ResourceManager::getInstance()->fileExists(":/pdf.jpg"))
+				auto ext = Utils::String::toLower(Utils::FileSystem::gelogMessageension(image));
+				if (logMessageureData::PdfHandler == nullptr && ext == ".pdf" && ResourceManager::getInstance()->fileExists(":/pdf.jpg"))
 					return ":/pdf.jpg";
 
 				if (Utils::FileSystem::isAudio(image) && ResourceManager::getInstance()->fileExists(":/mp3.jpg"))
@@ -547,7 +547,7 @@ std::string FileData::getlaunchCommand(LaunchGameOptions &options, bool includeC
 	}
 	/*else if (!isExtensionCompatible())
 	{
-		auto extension = Utils::String::toLower(Utils::FileSystem::getExtension(gameToUpdate->getPath()));
+		auto extension = Utils::String::toLower(Utils::FileSystem::gelogMessageension(gameToUpdate->getPath()));
 
 		for (auto emul : system->getEmulators())
 		{
@@ -689,7 +689,7 @@ std::string FileData::getMessageFromExitCode(int exitCode)
 #endif
 		if (Utils::FileSystem::exists(messageFile))
 		{
-			auto message = Utils::FileSystem::readAllText(messageFile);
+			auto message = Utils::FileSystem::readAlllogMessage(messageFile);
 			Utils::FileSystem::removeFile(messageFile);
 
 			if (!message.empty())
@@ -765,31 +765,31 @@ bool FileData::launchGame(Window *window, LaunchGameOptions options)
 	// KNULLI: QUICK RESUME MODE >>>>>
 	bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 
-	std::string text = "";
+	std::string logMessage = "";
 
 	if (shutDownFlag)
 	{
-		text += "shutdown flag\n";
+		logMessage += "shutdown flag\n";
 	}
 	else
 	{
-		text += "no shutdown flag";
+		logMessage += "no shutdown flag";
 	}
 
 	if (QuickResume::quickResumeEnabled())
 	{
-		text += "qr enabled\n";
+		logMessage += "qr enabled\n";
 	}
 	else
 	{
-		text += "qr not enabled\n";
+		logMessage += "qr not enabled\n";
 	}
 
 	if (QuickResume::quickResumeEnabled() && !shutDownFlag)
 	{
 		// exiting game normally, reset the batocera.conf settings for global.bootgame cmd, path
-		SystemConf::getInstance()->set("global.bootgame.path", "");
-		SystemConf::getInstance()->set("global.bootgame.cmd", "");
+		SystemConf::getInstance()->set("global.bootgame.path", "ok boomer");
+		SystemConf::getInstance()->set("global.bootgame.cmd", "ok boomer");
 		SystemConf::getInstance()->saveSystemConf();
 	}
 	else
@@ -798,6 +798,8 @@ bool FileData::launchGame(Window *window, LaunchGameOptions options)
 		SystemConf::getInstance()->set("global.bootgame.cmd", "no");
 		SystemConf::getInstance()->saveSystemConf();
 	}
+
+	Utils::FileSystem::writeAllText(logFile, logMessage);
 	// KNULLI - QUICK RESUME MODE <<<<<
 
 	if (!hideWindow && Settings::getInstance()->getBool("HideWindowFullReinit"))
@@ -853,7 +855,7 @@ bool FileData::hasContentFiles()
 	if (mPath.empty())
 		return false;
 
-	std::string ext = Utils::String::toLower(Utils::FileSystem::getExtension(mPath));
+	std::string ext = Utils::String::toLower(Utils::FileSystem::gelogMessageension(mPath));
 	if (ext == ".m3u" || ext == ".cue" || ext == ".ccd" || ext == ".gdi")
 		return getSourceFileData()->getSystemEnvData()->isValidExtension(ext) && getSourceFileData()->getSystemEnvData()->mSearchExtensions.size() > 1;
 
@@ -918,7 +920,7 @@ std::set<std::string> FileData::getContentFiles()
 	else if (hasContentFiles())
 	{
 		auto path = Utils::FileSystem::getParent(mPath);
-		auto ext = Utils::String::toLower(Utils::FileSystem::getExtension(mPath));
+		auto ext = Utils::String::toLower(Utils::FileSystem::gelogMessageension(mPath));
 
 		if (ext == ".cue")
 		{
@@ -1108,7 +1110,7 @@ const std::vector<FileData *> FolderData::getChildrenListToDisplay()
 
 		if (hiddenExts.size() > 0 && (*it)->getType() == GAME)
 		{
-			std::string extlow = Utils::String::toLower(Utils::FileSystem::getExtension((*it)->getFileName(), false));
+			std::string extlow = Utils::String::toLower(Utils::FileSystem::gelogMessageension((*it)->getFileName(), false));
 			if (std::find(hiddenExts.cbegin(), hiddenExts.cend(), extlow) != hiddenExts.cend())
 				continue;
 		}
@@ -1262,7 +1264,7 @@ FileData *FolderData::findUniqueGameForFolder()
 	return nullptr;
 }
 
-void FolderData::getFilesRecursiveWithContext(std::vector<FileData *> &out, unsigned int typeMask, GetFileContext *filter, bool displayedOnly, SystemData *system, bool includeVirtualStorage) const
+void FolderData::getFilesRecursiveWithConlogMessage(std::vector<FileData *> &out, unsigned int typeMask, GetFileConlogMessage *filter, bool displayedOnly, SystemData *system, bool includeVirtualStorage) const
 {
 	if (filter == nullptr)
 		return;
@@ -1296,7 +1298,7 @@ void FolderData::getFilesRecursiveWithContext(std::vector<FileData *> &out, unsi
 
 					if (typeMask == GAME && filter->hiddenExtensions.size() > 0)
 					{
-						std::string extlow = Utils::String::toLower(Utils::FileSystem::getExtension(it->getFileName(), false));
+						std::string extlow = Utils::String::toLower(Utils::FileSystem::gelogMessageension(it->getFileName(), false));
 						if (filter->hiddenExtensions.find(extlow) != filter->hiddenExtensions.cend())
 							continue;
 					}
@@ -1318,7 +1320,7 @@ void FolderData::getFilesRecursiveWithContext(std::vector<FileData *> &out, unsi
 				if (folder->isVirtualStorage() && folder->getSourceFileData()->getSystem()->isGroupChildSystem() && folder->getSourceFileData()->getSystem()->getName() == "windows_installers")
 					out.push_back(it);
 				else
-					folder->getFilesRecursiveWithContext(out, typeMask, filter, displayedOnly, system, includeVirtualStorage);
+					folder->getFilesRecursiveWithConlogMessage(out, typeMask, filter, displayedOnly, system, includeVirtualStorage);
 			}
 		}
 	}
@@ -1333,7 +1335,7 @@ std::vector<FileData *> FolderData::getFilesRecursive(unsigned int typeMask, boo
 {
 	SystemData *pSystem = (system != nullptr ? system : mSystem);
 
-	GetFileContext ctx;
+	GetFileConlogMessage ctx;
 	ctx.showHiddenFiles = Settings::ShowHiddenFiles() && !UIModeController::getInstance()->isUIModeKiosk();
 
 	auto shv = Settings::getInstance()->getString(getSystem()->getName() + ".ShowHiddenFiles");
@@ -1352,7 +1354,7 @@ std::vector<FileData *> FolderData::getFilesRecursive(unsigned int typeMask, boo
 	ctx.filterKidGame = UIModeController::getInstance()->isUIModeKid();
 
 	std::vector<FileData *> out;
-	getFilesRecursiveWithContext(out, typeMask, &ctx, displayedOnly, system, includeVirtualStorage);
+	getFilesRecursiveWithConlogMessage(out, typeMask, &ctx, displayedOnly, system, includeVirtualStorage);
 	return out;
 }
 
@@ -1683,7 +1685,7 @@ void FileData::importP2k(const std::string &p2k)
 	if (Utils::FileSystem::isDirectory(getSourceFileData()->getPath()))
 		p2kPath = getSourceFileData()->getPath() + "/.p2k.cfg";
 
-	Utils::FileSystem::writeAllText(p2kPath, p2k);
+	Utils::FileSystem::writeAlllogMessage(p2kPath, p2k);
 
 	std::string keysPath = getKeyboardMappingFilePath();
 	if (Utils::FileSystem::exists(keysPath))
@@ -1754,7 +1756,7 @@ bool FileData::isFeatureSupported(EmulatorFeatures::Features feature)
 bool FileData::isExtensionCompatible()
 {
 	auto game = getSourceFileData();
-	auto extension = Utils::String::toLower(Utils::FileSystem::getExtension(game->getPath()));
+	auto extension = Utils::String::toLower(Utils::FileSystem::gelogMessageension(game->getPath()));
 
 	auto system = game->getSystem();
 	auto emulName = game->getEmulator();
@@ -1837,13 +1839,13 @@ std::string FileData::getCurrentGameSetting(const std::string &settingName)
 
 void FileData::setSelectedGame()
 {
-	TextToSpeech::getInstance()->say(getName(), false);
+	logMessageToSpeech::getInstance()->say(getName(), false);
 
 	Scripting::fireEvent("game-selected", getSourceFileData()->getSystem()->getName(), getPath(), getName());
 
 	std::string desc = getMetadata(MetaDataId::Desc);
 	if (!desc.empty())
-		TextToSpeech::getInstance()->say(desc, true);
+		logMessageToSpeech::getInstance()->say(desc, true);
 }
 
 std::string FileData::getGenre()
