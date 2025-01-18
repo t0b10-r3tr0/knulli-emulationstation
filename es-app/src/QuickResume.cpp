@@ -4,7 +4,7 @@
 
 namespace QuickResume
 {
-    bool QuickResume::setQuickResume(std::string quickResumeCommand, std::string quickResumePath)
+    bool setQuickResume(std::string quickResumeCommand, std::string quickResumePath)
     {
         bool configSaved = false;
 
@@ -21,7 +21,7 @@ namespace QuickResume
         return configSaved;
     }
 
-    bool QuickResume::clearQuickResume()
+    bool clearQuickResume()
     {
         bool configSaved = false;
 
@@ -32,7 +32,7 @@ namespace QuickResume
         return configSaved;
     }
 
-    bool QuickResume::postLaunchConditionalClear()
+    bool postLaunchConditionalClear()
     {
         bool configSaved = false;
 

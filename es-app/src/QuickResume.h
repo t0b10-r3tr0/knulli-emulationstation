@@ -5,7 +5,7 @@ namespace QuickResume
 {
     bool setQuickResume(std::string quickResumeCommand, std::string quickResumePath);
     bool clearQuickResume();
-    bool shutDownInProgress();
-    bool quickResumeEnabled();
     bool postLaunchConditionalClear();
+    bool quickResumeEnabled();
+    bool shutDownInProgress();
 }
