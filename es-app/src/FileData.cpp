@@ -39,6 +39,7 @@ using namespace Utils::Platform;
 
 // KNULLI - QUICK RESUME MODE - logging will be cleaned up after testing >>>>>
 const std::string logFile = "/userdata/system/logs/quick-resume.log";
+std::string logMessage;
 // KNULLI - QUICK RESUME MODE <<<<<
 
 static std::map<std::string, std::function<BindableProperty(FileData*)>> properties =
@@ -752,29 +753,34 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 
 
 if (shutDownFlag)
-	Utils::FileSystem::writeAllText("~/a.txt", "shutdown flag true");
+	logMessage.append("shutdown flag detected\n");
 else
-	Utils::FileSystem::writeAllText("~/a.txt", "shutdown flag false");
+	logMessage.append("shutdown flag not detected\n");
+
 
 if (qr)
-	Utils::FileSystem::writeAllText("~/b.txt", "qr true");
+	logMessage.append("qr detected\n");
 else
-	Utils::FileSystem::writeAllText("~/b.txt", "qr false");
+	logMessage.append("qr not detected\n");
 
 
 	if (QuickResume::quickResumeEnabled() && !shutDownFlag)
 	{
 		// exiting game normally, reset the batocera.conf settings for global.bootgame cmd, path
+			logMessage.append("clearing settings\n");
 		SystemConf::getInstance()->set("global.bootgame.path", "");
 		SystemConf::getInstance()->set("global.bootgame.cmd", "");
 		SystemConf::getInstance()->saveSystemConf();
 	}
 	else
 	{
+			logMessage.append("keeping settings\n");
 		SystemConf::getInstance()->set("global.bootgame.path", "preserve");
 		SystemConf::getInstance()->set("global.bootgame.cmd", "preserve");
 		SystemConf::getInstance()->saveSystemConf();
 	}
+
+	Utils::FileSystem::writeAllText(logFile, logMessage);
 	// KNULLI - QUICK RESUME MODE <<<<<
 
 	if (!hideWindow && Settings::getInstance()->getBool("HideWindowFullReinit"))
