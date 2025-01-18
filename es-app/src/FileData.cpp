@@ -763,6 +763,9 @@ bool FileData::launchGame(Window *window, LaunchGameOptions options)
 	Scripting::fireEvent("game-end");
 
 	// KNULLI: QUICK RESUME MODE >>>>>
+	std::string logFile = "~/main.log";
+	std::string logMessage;
+
 	bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 
 	std::string text = "";

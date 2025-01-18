@@ -41,6 +41,7 @@
 #include "Scripting.h"
 #include "watchers/WatchersManager.h"
 #include "HttpReq.h"
+#include "QuickResume.h"
 
 #ifdef WIN32
 #include <Windows.h>
@@ -438,17 +439,41 @@ void launchStartupGame()
 	}	
 }
 
+
+
 void postLaunchStartupGame()
 {
 	bool shutdownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 	bool quickResumeEnabled = SystemConf::getInstance()->getBool("global.quickresume") == true;
 
+std::string logFile = "~/main.log";
+std::string logMessage;
+
+if (quickResumeEnabled)
+	logMessage += "main - quick resume enabled";
+else
+	logMessage += "main - quick resume not enabled";
+
+
+if (shutdownFlag)
+	logMessage += "main - shutdownFlag detected";
+else
+	logMessage += "main - shutdownFlag not detected";
+
 	if (!shutdownFlag && quickResumeEnabled)
 	{
-		SystemConf::getInstance()->set("global.bootgame.path", "roy");
-		SystemConf::getInstance()->set("global.bootgame.cmd", "roy");
+		SystemConf::getInstance()->set("global.bootgame.path", "");
+		SystemConf::getInstance()->set("global.bootgame.cmd", "");
 		SystemConf::getInstance()->saveSystemConf();
+		logMessage += "clear settings";
 	}
+	else
+	{
+		logMessage += "keep settings";
+	}
+
+	
+	Utils::FileSystem::writeAllText(logFile, logMessage);
 }
 
 #include "utils/MathExpr.h"
