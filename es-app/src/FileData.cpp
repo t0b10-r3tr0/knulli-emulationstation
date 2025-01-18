@@ -702,13 +702,7 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 		return false;
 
 	// KNULLI - QUICK RESUME MODE >>>>>
-	bool quickResume = SystemConf::getInstance()->getBool("global.quickresume") == true;
-
-		// check if quick resume is enabled and the command and path contain data
-	// if (QuickResume::quickResumeEnabled)
-	// {
-		QuickResume::setQuickResume(getlaunchCommand(false), getFullPath());
-	// }
+	QuickResume::setQuickResume(getlaunchCommand(false), getFullPath());
 	// KNULLI - QUICK RESUME MODE <<<<<
 
 	AudioManager::getInstance()->deinit();
@@ -753,9 +747,9 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	Scripting::fireEvent("game-end");
 	
 	// KNULLI: QUICK RESUME MODE >>>>>
-	bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
+	// bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 
-	if (quickResume && !shutDownFlag)
+	if (QuickResume::quickResumeEnabled() && !QuickResume::shutDownInProgress())
 	{
 		// exiting game normally, reset the batocera.conf settings for global.bootgame cmd, path
 		SystemConf::getInstance()->set("global.bootgame.path", "");
