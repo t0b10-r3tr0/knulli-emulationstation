@@ -33,6 +33,7 @@
 #include "guis/GuiMsgBox.h"
 #include "Paths.h"
 #include "resources/TextureData.h"
+#include "QuickResume.h"
 
 using namespace Utils::Platform;
 
@@ -706,7 +707,7 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	std::string quickResumePath = getFullPath();
 
 	// check if quick resume is enabled and the command and path contain data
-	if (quickResume && !(quickResumeCommand.empty() || quickResumePath.empty()))
+	if (QuickResume::quickResumeEnabled() && !(quickResumeCommand.empty() || quickResumePath.empty()))
 	{
 		SystemConf::getInstance()->set("global.bootgame.path", quickResumePath);
 		SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
