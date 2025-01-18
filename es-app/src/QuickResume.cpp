@@ -48,9 +48,7 @@ namespace QuickResume
 
     bool shutDownInProgress()
     {
-        bool exists = false;
-        exists = Utils::FileSystem::exists("/var/run/shutdown.flag");
-        return exists;
+        return Utils::FileSystem::exists("/var/run/shutdown.flag");
     }
 
     bool quickResumeEnabled()

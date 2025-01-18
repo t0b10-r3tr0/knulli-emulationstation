@@ -752,8 +752,14 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	if (QuickResume::quickResumeEnabled() && !shutDownFlag)
 	{
 		// exiting game normally, reset the batocera.conf settings for global.bootgame cmd, path
-		SystemConf::getInstance()->set("global.bootgame.path", "");
-		SystemConf::getInstance()->set("global.bootgame.cmd", "");
+		SystemConf::getInstance()->set("global.bootgame.path", "ok boomer");
+		SystemConf::getInstance()->set("global.bootgame.cmd", "ok boomer");
+		SystemConf::getInstance()->saveSystemConf();
+	}
+	else
+	{
+		SystemConf::getInstance()->set("global.bootgame.path", "ok");
+		SystemConf::getInstance()->set("global.bootgame.cmd", "ok");
 		SystemConf::getInstance()->saveSystemConf();
 	}
 	// KNULLI - QUICK RESUME MODE <<<<<
