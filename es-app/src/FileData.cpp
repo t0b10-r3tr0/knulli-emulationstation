@@ -33,9 +33,12 @@
 #include "guis/GuiMsgBox.h"
 #include "Paths.h"
 #include "resources/TextureData.h"
-#include "QuickResume.h"
 
 using namespace Utils::Platform;
+
+// KNULLI - QUICK RESUME MODE - logging will be cleaned up after testing >>>>>
+const std::string logFile = "/userdata/system/logs/quick-resume.log";
+// KNULLI - QUICK RESUME MODE <<<<<
 
 static std::map<std::string, std::function<BindableProperty(FileData*)>> properties =
 {
@@ -698,7 +701,17 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 		return false;
 
 	// KNULLI - QUICK RESUME MODE >>>>>
-	QuickResume::setQuickResume(getlaunchCommand(false), getFullPath());
+	bool quickResume = SystemConf::getInstance()->getBool("global.quickresume") == true;
+	std::string quickResumeCommand = getlaunchCommand(false);
+	std::string quickResumePath = getFullPath();
+
+	// check if quick resume is enabled and the command and path contain data
+	if (quickResume && !(quickResumeCommand.empty() || quickResumePath.empty()))
+	{
+		SystemConf::getInstance()->set("global.bootgame.path", quickResumePath);
+		SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
+		SystemConf::getInstance()->saveSystemConf();
+	}
 	// KNULLI - QUICK RESUME MODE <<<<<
 
 	AudioManager::getInstance()->deinit();
@@ -743,7 +756,15 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	Scripting::fireEvent("game-end");
 	
 	// KNULLI: QUICK RESUME MODE >>>>>
-	QuickResume::postLaunchConditionalClear();
+	bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
+
+	if (quickResume && !shutDownFlag)
+	{
+		// exiting game normally, reset the batocera.conf settings for global.bootgame cmd, path
+		SystemConf::getInstance()->set("global.bootgame.path", "");
+		SystemConf::getInstance()->set("global.bootgame.cmd", "");
+		SystemConf::getInstance()->saveSystemConf();
+	}
 	// KNULLI - QUICK RESUME MODE <<<<<
 
 	if (!hideWindow && Settings::getInstance()->getBool("HideWindowFullReinit"))
