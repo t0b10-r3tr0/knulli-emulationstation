@@ -707,10 +707,10 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	std::string quickResumePath = getFullPath();
 
 	// check if quick resume is enabled and the command and path contain data
-	if (QuickResume::quickResumeEnabled && !(quickResumeCommand.empty() || quickResumePath.empty()))
+	if (QuickResume::quickResumeEnabled()-> && !(quickResumeCommand.empty() || quickResumePath.empty()))
 	{
-		SystemConf::getInstance()->set("global.bootgame.path", quickResumePath);
-		SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
+		SystemConf::getInstance()->set("global.bootgame.path", getlaunchCommand(false));
+		SystemConf::getInstance()->set("global.bootgame.cmd", getFullPath());
 		SystemConf::getInstance()->saveSystemConf();
 	}
 	// KNULLI - QUICK RESUME MODE <<<<<
