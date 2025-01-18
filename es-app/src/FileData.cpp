@@ -748,6 +748,19 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	
 	// KNULLI: QUICK RESUME MODE >>>>>
 	bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
+	bool qr = QuickResume::quickResumeEnabled();
+
+
+if (shutDownFlag)
+	Utils::FileSystem::writeAllText("~/a.txt", "shutdown flag true");
+else
+	Utils::FileSystem::writeAllText("~/a.txt", "shutdown flag false");
+
+if (qr)
+	Utils::FileSystem::writeAllText("~/b.txt", "qr true");
+else
+	Utils::FileSystem::writeAllText("~/b.txt", "qr false");
+
 
 	if (QuickResume::quickResumeEnabled() && !shutDownFlag)
 	{
