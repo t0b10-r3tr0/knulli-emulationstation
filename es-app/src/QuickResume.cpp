@@ -36,7 +36,7 @@ namespace QuickResume
     {
         bool configSaved = false;
 
-        if (!shutDownInProgress() && quickResumeEnabled())
+        if (quickResumeEnabled() && (shutDownInProgress() == false))
         {
             SystemConf::getInstance()->set("global.bootgame.path", "");
             SystemConf::getInstance()->set("global.bootgame.cmd", "");
@@ -48,7 +48,9 @@ namespace QuickResume
 
     bool shutDownInProgress()
     {
-        return Utils::FileSystem::exists("/var/run/shutdown.flag");
+        bool exists = false;
+        exists = Utils::FileSystem::exists("/var/run/shutdown.flag");
+        return exists;
     }
 
     bool quickResumeEnabled()

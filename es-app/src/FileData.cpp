@@ -747,15 +747,21 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	Scripting::fireEvent("game-end");
 	
 	// KNULLI: QUICK RESUME MODE >>>>>
-	// bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
+	bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 
 	if (QuickResume::quickResumeEnabled() && !QuickResume::shutDownInProgress())
 	{
 		// exiting game normally, reset the batocera.conf settings for global.bootgame cmd, path
-		SystemConf::getInstance()->set("global.bootgame.path", "");
-		SystemConf::getInstance()->set("global.bootgame.cmd", "");
+		SystemConf::getInstance()->set("global.bootgame.path", "red");
+		SystemConf::getInstance()->set("global.bootgame.cmd", "red");
 		SystemConf::getInstance()->saveSystemConf();
 	}
+	else if (QuickResume::quickResumeEnabled() && !shutDownFlag)
+		// exiting game normally, reset the batocera.conf settings for global.bootgame cmd, path
+		SystemConf::getInstance()->set("global.bootgame.path", "blue");
+		SystemConf::getInstance()->set("global.bootgame.cmd", "blue");
+		SystemConf::getInstance()->saveSystemConf();
+
 	// KNULLI - QUICK RESUME MODE <<<<<
 
 	if (!hideWindow && Settings::getInstance()->getBool("HideWindowFullReinit"))
