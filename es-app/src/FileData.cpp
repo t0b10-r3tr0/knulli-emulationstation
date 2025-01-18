@@ -743,7 +743,7 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	Scripting::fireEvent("game-end");
 	
 	// KNULLI: QUICK RESUME MODE >>>>>
-	bool QuickResume::postLaunchConditionalClear()
+	QuickResume::postLaunchConditionalClear()
 	// KNULLI - QUICK RESUME MODE <<<<<
 
 	if (!hideWindow && Settings::getInstance()->getBool("HideWindowFullReinit"))
