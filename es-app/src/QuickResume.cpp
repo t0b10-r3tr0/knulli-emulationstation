@@ -2,54 +2,57 @@
 #include "SystemConf.h"
 #include "utils/FileSystemUtil.h"
 
-bool setQuickResume(std::string quickResumeCommand, std::string quickResumePath)
+namespace QuickResume
 {
-    bool configSaved = false;
-
-    if (quickResumeEnabled())
+    bool QuickResume::setQuickResume(std::string quickResumeCommand, std::string quickResumePath)
     {
-        if (!quickResumeCommand.empty() && !quickResumePath.empty())
+        bool configSaved = false;
+
+        if (quickResumeEnabled())
         {
-            SystemConf::getInstance()->set("global.bootgame.path", quickResumePath);
-            SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
-            configSaved = SystemConf::getInstance()->saveSystemConf();
+            if (!quickResumeCommand.empty() && !quickResumePath.empty())
+            {
+                SystemConf::getInstance()->set("global.bootgame.path", quickResumePath);
+                SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
+                configSaved = SystemConf::getInstance()->saveSystemConf();
+            }
         }
+
+        return configSaved;
     }
 
-    return configSaved;
-}
-
-bool QuickResume::clearQuickResume()
-{
-    bool configSaved = false;
-
-    SystemConf::getInstance()->set("global.bootgame.path", "");
-    SystemConf::getInstance()->set("global.bootgame.cmd", "");
-    configSaved = SystemConf::getInstance()->saveSystemConf();
-
-    return configSaved;
-}
-
-bool QuickResume::postLaunchConditionalClear()
-{
-    bool configSaved = false;
-
-    if (!shutDownInProgress() && quickResumeEnabled())
+    bool QuickResume::clearQuickResume()
     {
+        bool configSaved = false;
+
         SystemConf::getInstance()->set("global.bootgame.path", "");
         SystemConf::getInstance()->set("global.bootgame.cmd", "");
         configSaved = SystemConf::getInstance()->saveSystemConf();
+
+        return configSaved;
     }
 
-    return configSaved;
-}
+    bool QuickResume::postLaunchConditionalClear()
+    {
+        bool configSaved = false;
 
-bool shutDownInProgress()
-{
-    return Utils::FileSystem::exists("/var/run/shutdown.flag");
-}
+        if (!shutDownInProgress() && quickResumeEnabled())
+        {
+            SystemConf::getInstance()->set("global.bootgame.path", "");
+            SystemConf::getInstance()->set("global.bootgame.cmd", "");
+            configSaved = SystemConf::getInstance()->saveSystemConf();
+        }
 
-bool quickResumeEnabled()
-{
-    return SystemConf::getInstance()->getBool("global.quickresume") == true;
+        return configSaved;
+    }
+
+    bool shutDownInProgress()
+    {
+        return Utils::FileSystem::exists("/var/run/shutdown.flag");
+    }
+
+    bool quickResumeEnabled()
+    {
+        return SystemConf::getInstance()->getBool("global.quickresume") == true;
+    }
 }

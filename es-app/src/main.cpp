@@ -436,7 +436,7 @@ void launchStartupGame()
 		InputManager::getInstance()->init();
 		command = Utils::String::replace(command, "%CONTROLLERSCONFIG%", InputManager::getInstance()->configureEmulators());
 		Utils::Platform::ProcessStartInfo(command).run();
-		QuickResume::postLaunchConditionalClear();
+		postla
 	}	
 }
 
