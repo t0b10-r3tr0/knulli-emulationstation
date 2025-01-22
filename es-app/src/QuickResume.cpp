@@ -25,9 +25,12 @@ namespace QuickResume
     {
         bool configSaved = false;
 
-        SystemConf::getInstance()->set("global.bootgame.path", "");
-        SystemConf::getInstance()->set("global.bootgame.cmd", "");
-        configSaved = SystemConf::getInstance()->saveSystemConf();
+        if (quickResumeEnabled())
+        {
+            SystemConf::getInstance()->set("global.bootgame.path", "");
+            SystemConf::getInstance()->set("global.bootgame.cmd", "");
+            configSaved = SystemConf::getInstance()->saveSystemConf();
+        }
 
         return configSaved;
     }
@@ -38,9 +41,7 @@ namespace QuickResume
 
         if (quickResumeEnabled() && (shutDownInProgress() == false))
         {
-            SystemConf::getInstance()->set("global.bootgame.path", "");
-            SystemConf::getInstance()->set("global.bootgame.cmd", "");
-            configSaved = SystemConf::getInstance()->saveSystemConf();
+            configSaved = clearQuickResume();
         }
 
         return configSaved;
