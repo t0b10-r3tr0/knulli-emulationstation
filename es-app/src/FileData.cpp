@@ -746,17 +746,24 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	const std::string logFile = "/userdata/system/logs/quick-resume.log";
 	std::string logMessage;
 
-	bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
+	// bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 
-	if (!shutDownFlag)
+	// if (!shutDownFlag)
+	// {
+	// 	logMessage.append("clearing settings\n");
+	// 	QuickResume::clearQuickResume();
+	// }
+	// else
+	// {
+	// 	logMessage.append("keeping settings\n");
+	// }
+	if (QuickResume::postLaunchConditionalClear())
 	{
-		// exiting game normally, reset the batocera.conf settings for global.bootgame cmd, path
-		logMessage.append("clearing settings\n");
-		QuickResume::clearQuickResume();
+		logMessage.append("cleared conf");
 	}
 	else
 	{
-		logMessage.append("keeping settings\n");
+		logMessage.append("preserved conf");
 	}
 
 	Utils::FileSystem::writeAllText(logFile, logMessage);
