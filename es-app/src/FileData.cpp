@@ -743,21 +743,14 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	Scripting::fireEvent("game-end");
 	
 	// KNULLI: QUICK RESUME MODE >>>>>
-	const std::string logFile = "/userdata/system/logs/quick-resume.log";
-	std::string logMessage;
+	// const std::string logFile = "/userdata/system/logs/quick-resume.log";
+	// std::string logMessage;
 
 	// bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 
-	if (QuickResume::postLaunchConditionalClear())
-	{
-		logMessage.append("cleared conf");
-	}
-	else
-	{
-		logMessage.append("preserved conf");
-	}
+	QuickResume::postLaunchConditionalClear();
 
-	Utils::FileSystem::writeAllText(logFile, logMessage);
+	// Utils::FileSystem::writeAllText(logFile, logMessage);
 	// KNULLI - QUICK RESUME MODE <<<<<
 
 	if (!hideWindow && Settings::getInstance()->getBool("HideWindowFullReinit"))
