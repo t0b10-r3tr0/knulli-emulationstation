@@ -436,41 +436,42 @@ void launchStartupGame()
 		InputManager::getInstance()->init();
 		command = Utils::String::replace(command, "%CONTROLLERSCONFIG%", InputManager::getInstance()->configureEmulators());
 		Utils::Platform::ProcessStartInfo(command).run();
+		QuickResume::postLaunchConditionalClean();
 	}	
 }
 
 
 
-void postLaunchStartupGame()
-{
-	// bool shutdownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
-	// bool quickResumeEnabled = SystemConf::getInstance()->getBool("global.quickresume") == true;
+// void postLaunchStartupGame()
+// {
+// 	// bool shutdownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
+// 	// bool quickResumeEnabled = SystemConf::getInstance()->getBool("global.quickresume") == true;
 
-	std::string logFile = "/userdata/system/logs/main.log";
-	std::string logMessage;
+// 	std::string logFile = "/userdata/system/logs/main.log";
+// 	std::string logMessage;
 
-	// if (quickResumeEnabled)
-	// 	logMessage += "main - quick resume enabled";
-	// else
-	// 	logMessage += "main - quick resume not enabled";
+// 	// if (quickResumeEnabled)
+// 	// 	logMessage += "main - quick resume enabled";
+// 	// else
+// 	// 	logMessage += "main - quick resume not enabled";
 
-	// if (shutdownFlag)
-	// 	logMessage += "main - shutdownFlag detected";
-	// else
-	// 	logMessage += "main - shutdownFlag not detected";
+// 	// if (shutdownFlag)
+// 	// 	logMessage += "main - shutdownFlag detected";
+// 	// else
+// 	// 	logMessage += "main - shutdownFlag not detected";
 
-	if (QuickResume::postLaunchConditionalClear())
-	{
-		logMessage.append("clear settings");
-	}
-	else
-	{
-		logMessage.append("keep settings");
-	}
+// 	if (QuickResume::postLaunchConditionalClean())
+// 	{
+// 		logMessage.append("clear settings");
+// 	}
+// 	else
+// 	{
+// 		logMessage.append("keep settings");
+// 	}
 
 	
-	Utils::FileSystem::writeAllText(logFile, logMessage);
-}
+// 	Utils::FileSystem::writeAllText(logFile, logMessage);
+// }
 
 #include "utils/MathExpr.h"
 
@@ -555,7 +556,6 @@ int main(int argc, char* argv[])
 	if(enable_startup_game) {
 	    	// Run boot game, before Window Create for linux
 		launchStartupGame();
-		postLaunchStartupGame();
 	}
 #endif
 

@@ -37,7 +37,7 @@ namespace QuickResume
         return configSaved;
     }
 
-    bool postLaunchConditionalClear()
+    bool postLaunchConditionalClean()
     {
         bool configSaved = false;
 
