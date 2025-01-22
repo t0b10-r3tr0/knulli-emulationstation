@@ -436,42 +436,11 @@ void launchStartupGame()
 		InputManager::getInstance()->init();
 		command = Utils::String::replace(command, "%CONTROLLERSCONFIG%", InputManager::getInstance()->configureEmulators());
 		Utils::Platform::ProcessStartInfo(command).run();
+		// KNULLI - QUICK RESUME MODE >>>>>
 		QuickResume::postLaunchConditionalClean();
+		// KNULLI - QUICK RESUME MODE <<<<<
 	}	
 }
-
-
-
-// void postLaunchStartupGame()
-// {
-// 	// bool shutdownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
-// 	// bool quickResumeEnabled = SystemConf::getInstance()->getBool("global.quickresume") == true;
-
-// 	std::string logFile = "/userdata/system/logs/main.log";
-// 	std::string logMessage;
-
-// 	// if (quickResumeEnabled)
-// 	// 	logMessage += "main - quick resume enabled";
-// 	// else
-// 	// 	logMessage += "main - quick resume not enabled";
-
-// 	// if (shutdownFlag)
-// 	// 	logMessage += "main - shutdownFlag detected";
-// 	// else
-// 	// 	logMessage += "main - shutdownFlag not detected";
-
-// 	if (QuickResume::postLaunchConditionalClean())
-// 	{
-// 		logMessage.append("clear settings");
-// 	}
-// 	else
-// 	{
-// 		logMessage.append("keep settings");
-// 	}
-
-	
-// 	Utils::FileSystem::writeAllText(logFile, logMessage);
-// }
 
 #include "utils/MathExpr.h"
 
