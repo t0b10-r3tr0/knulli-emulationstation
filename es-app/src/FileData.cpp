@@ -766,14 +766,14 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	if (QuickResume::quickResumeEnabled() && !shutDownFlag)
 	{
 		// exiting game normally, reset the batocera.conf settings for global.bootgame cmd, path
-			logMessage.append("clearing settings\n");
+		logMessage.append("clearing settings\n");
 		SystemConf::getInstance()->set("global.bootgame.path", "");
 		SystemConf::getInstance()->set("global.bootgame.cmd", "");
 		SystemConf::getInstance()->saveSystemConf();
 	}
 	else
 	{
-			logMessage.append("keeping settings\n");
+		logMessage.append("keeping settings\n");
 		SystemConf::getInstance()->set("global.bootgame.path", "preserve");
 		SystemConf::getInstance()->set("global.bootgame.cmd", "preserve");
 		SystemConf::getInstance()->saveSystemConf();
