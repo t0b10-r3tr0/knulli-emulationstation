@@ -39,7 +39,7 @@ namespace QuickResume
     {
         bool configSaved = false;
 
-        if (quickResumeEnabled() && (shutDownInProgress() == false))
+        if (quickResumeEnabled() && !shutDownInProgress())
         {
             configSaved = clearQuickResume();
         }
@@ -49,7 +49,7 @@ namespace QuickResume
 
     bool shutDownInProgress()
     {
-        return Utils::FileSystem::exists("/var/run/shutdown.flag");
+        return Utils::FileSystem::exists("/var/run/shutdown.flag") == true;
     }
 
     bool quickResumeEnabled()
