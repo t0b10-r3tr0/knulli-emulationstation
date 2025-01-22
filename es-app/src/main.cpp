@@ -446,7 +446,7 @@ void postLaunchStartupGame()
 	// bool shutdownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 	// bool quickResumeEnabled = SystemConf::getInstance()->getBool("global.quickresume") == true;
 
-	std::string logFile = "~/main.log";
+	std::string logFile = "/userdata/system/logs/main.log";
 	std::string logMessage;
 
 	// if (quickResumeEnabled)
@@ -459,13 +459,13 @@ void postLaunchStartupGame()
 	// else
 	// 	logMessage += "main - shutdownFlag not detected";
 
-	if (QuickResume::postLaunchConditionalClear)
+	if (QuickResume::postLaunchConditionalClear())
 	{
-		logMessage += "clear settings";
+		logMessage.append("clear settings");
 	}
 	else
 	{
-		logMessage += "keep settings";
+		logMessage.append("keep settings");
 	}
 
 	
