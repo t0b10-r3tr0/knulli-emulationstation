@@ -3,9 +3,7 @@
 #include "utils/FileSystemUtil.h"
 
 namespace QuickResume
-{
-    std::string logFile = "/userdata/system/qr.txt";
-    
+{    
     bool setQuickResume(std::string quickResumeCommand, std::string quickResumePath)
     {
         bool configSaved = false;
