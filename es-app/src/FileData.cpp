@@ -37,11 +37,6 @@
 
 using namespace Utils::Platform;
 
-// KNULLI - QUICK RESUME MODE - logging will be cleaned up after testing >>>>>
-const std::string logFile = "/userdata/system/logs/quick-resume.log";
-std::string logMessage;
-// KNULLI - QUICK RESUME MODE <<<<<
-
 static std::map<std::string, std::function<BindableProperty(FileData*)>> properties =
 {
 	{ "name",				[](FileData* file) { return file->getName(); } },
@@ -748,6 +743,9 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	Scripting::fireEvent("game-end");
 	
 	// KNULLI: QUICK RESUME MODE >>>>>
+	const std::string logFile = "/userdata/system/logs/quick-resume.log";
+	std::string logMessage;
+
 	bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 
 
