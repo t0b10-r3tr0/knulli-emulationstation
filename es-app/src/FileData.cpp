@@ -748,33 +748,15 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 
 	bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 
-
-	if (shutDownFlag)
-		logMessage.append("shutdown flag detected\n");
-	else
-		logMessage.append("shutdown flag not detected\n");
-
-
-	if (QuickResume::quickResumeEnabled())
-		logMessage.append("qr detected\n");
-	else
-		logMessage.append("qr not detected\n");
-
-
-	if (QuickResume::quickResumeEnabled() && !shutDownFlag)
+	if (!shutDownFlag)
 	{
 		// exiting game normally, reset the batocera.conf settings for global.bootgame cmd, path
 		logMessage.append("clearing settings\n");
-		SystemConf::getInstance()->set("global.bootgame.path", "");
-		SystemConf::getInstance()->set("global.bootgame.cmd", "");
-		SystemConf::getInstance()->saveSystemConf();
+		QuickResume::clearQuickResume();
 	}
 	else
 	{
 		logMessage.append("keeping settings\n");
-		SystemConf::getInstance()->set("global.bootgame.path", "preserve");
-		SystemConf::getInstance()->set("global.bootgame.cmd", "preserve");
-		SystemConf::getInstance()->saveSystemConf();
 	}
 
 	Utils::FileSystem::writeAllText(logFile, logMessage);
