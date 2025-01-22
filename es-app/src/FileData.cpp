@@ -748,15 +748,6 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 
 	// bool shutDownFlag = Utils::FileSystem::exists("/var/run/shutdown.flag");
 
-	// if (!shutDownFlag)
-	// {
-	// 	logMessage.append("clearing settings\n");
-	// 	QuickResume::clearQuickResume();
-	// }
-	// else
-	// {
-	// 	logMessage.append("keeping settings\n");
-	// }
 	if (QuickResume::postLaunchConditionalClear())
 	{
 		logMessage.append("cleared conf");
