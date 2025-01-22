@@ -4,6 +4,8 @@
 
 namespace QuickResume
 {    
+    const std::string shutdownFlag = "/var/run/shutdown.flag";
+
     bool setQuickResume(std::string quickResumeCommand, std::string quickResumePath)
     {
         bool configSaved = false;
@@ -49,7 +51,7 @@ namespace QuickResume
 
     bool shutDownInProgress()
     {
-        return Utils::FileSystem::exists("/var/run/shutdown.flag") == true;
+        return Utils::FileSystem::exists(shutdownFlag);
     }
 
     bool quickResumeEnabled()
