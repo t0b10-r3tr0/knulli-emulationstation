@@ -77,14 +77,10 @@ namespace GameLaunchSplash
 
             process.waitForExit = true;
             process.showWindow = true;
-            process.stderrFilename = "stderr.ry.txt";
-            process.stdoutFilename = "stdout.ry.txt";
 
             process.run();
-            executed = true;
+            return executed;
         }
-
-        return executed;
     }
 
     std::string getCustomImagePath(std::string imagePath, std::string imageType)

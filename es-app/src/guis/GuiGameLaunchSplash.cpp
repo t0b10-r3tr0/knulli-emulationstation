@@ -39,6 +39,7 @@ GuiGameLaunchSplash::GuiGameLaunchSplash(Window *window) : ExtendedGuiSettings(w
                                {_("FAN ART"), _("Use scraped fan art, if available."), "4"},
                                {_("BOX BACKSIDE"), _("Use the scraped box backside, if available."), "5"}},
                               SystemConf::getInstance()->get("gamelaunchsplash.foreground"));
+    addWithDescription(_("FOREGROUND IMAGE"), _("The image to display in the foreground of the splash screen."), foregroundImage);
 
     // IMAGE
     backgroundImage = std::make_shared<OptionListComponent<std::string>>(mWindow, _("FOREGROUND IMAGE"));
@@ -49,6 +50,7 @@ GuiGameLaunchSplash::GuiGameLaunchSplash(Window *window) : ExtendedGuiSettings(w
                                {_("FAN ART"), _("Use scraped fan art, if available."), "4"},
                                {_("BOX BACKSIDE"), _("Use the scraped box backside, if available."), "5"}},
                               SystemConf::getInstance()->get("gamelaunchsplash.background"));
+    addWithDescription(_("BACKGROUND IMAGE"), _("The image to display in the background of the splash screen."), backgroundImage);
 
     // INITIAL SCALE
     sliderInitialScale = createSlider(_("INITIAL SCALE"), 0.f, 100.f, 5.f, "%", _("The initial scale of the image."), true);

@@ -735,7 +735,6 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	process.window = hideWindow ? NULL : window;
 	
 	int exitCode = process.run();
-	GameLaunchSplash::runGameLaunchSplash(getImagePath());
 	if (exitCode != 0)
 		LOG(LogWarning) << "...launch terminated with nonzero exit code " << exitCode << "!";
 
