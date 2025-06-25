@@ -16,8 +16,6 @@
 #include <algorithm>
 #include <memory>
 #include <string>
-#include "RgbService.h"
-#include "BoardCheck.h"
 #include "Log.h"
 
 constexpr float DEFAULT_FOREGROUND_IMAGE = 1;
