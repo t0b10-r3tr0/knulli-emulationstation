@@ -58,11 +58,11 @@ GuiGameLaunchSplash::GuiGameLaunchSplash(Window *window) : ExtendedGuiSettings(w
     setConfigValueForSlider(sliderFinalScale, DEFAULT_FINAL_SCALE, "gamelaunchsplash.finalscale");
 
     // Fade Time Slider
-    sliderFadeTime = createSlider(_("FADE TIME"), 0.f, 5.f, 0.25f, "", ("The amount of time (seconds) each fade should take."), true);
+    sliderFadeTime = createSlider(_("FADE TIME"), 0.f, 5.f, 0.1f, "", ("The amount of time (seconds) each fade should take."), true);
     setConfigValueForSlider(sliderFadeTime, DEFAULT_FADE_TIME, "gamelaunchsplash.fadetime");
 
     // Show Time Slider
-    sliderShowTime = createSlider(_("SHOW TIME"), 1.f, 10.f, 0.5f, "", _("The amount of time (seconds) to display after initial fade and before fading out."), true);
+    sliderShowTime = createSlider(_("SHOW TIME"), 0.f, 10.f, 0.25f, "", _("The amount of time (seconds) to display after initial fade and before fading out."), true);
     setConfigValueForSlider(sliderShowTime, DEFAULT_SHOW_TIME, "gamelaunchsplash.showtime");
 
     addSaveFunc([this]
