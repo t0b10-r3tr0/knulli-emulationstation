@@ -13,6 +13,7 @@ public:
 
 private:
     std::shared_ptr<OptionListComponent<std::string>> createModeOptionList();
+    std::shared_ptr<SwitchComponent> switchEnabled;;
     std::shared_ptr<OptionListComponent<std::string>> foregroundImage;
     std::shared_ptr<OptionListComponent<std::string>> backgroundImage;
     std::shared_ptr<SliderComponent> sliderInitialScale;

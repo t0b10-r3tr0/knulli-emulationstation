@@ -44,6 +44,11 @@ namespace GameLaunchSplash
         return configSaved;
     }
 
+    bool gameLaunchSplashEnabled()
+    {
+        return SystemConf::getInstance()->getBool("global.gamelaunchsplash") == true;
+    }
+
     bool runGameLaunchSplash(std::string imagePath)
     {
         bool executed = false;
@@ -60,7 +65,6 @@ namespace GameLaunchSplash
 
             std::string commandToRun;
 
-            
             // Generate the command, adding background if set
             commandToRun = "game_launch_splash " + foregroundImage + " 0 1 0.75 3";
             commandToRun += !backgroundImage.empty() ? " " + backgroundImage : "";
@@ -100,11 +104,6 @@ namespace GameLaunchSplash
         return nullptr;
     }
 
-    bool gameLaunchSplashEnabled()
-    {
-        return SystemConf::getInstance()->getBool("global.gamelaunchsplash") == true;
-    }
-
     void parseImagePath(const std::string &imagePath, std::string &dirPath, std::string &extension, std::string &baseGameName)
     {
         size_t lastSlash = imagePath.find_last_of("/\\");
@@ -129,6 +128,30 @@ namespace GameLaunchSplash
         }
     }
 
+    std::string constructImagePath(const std::string &dir, const std::string &base, const std::string &type)
+    {
+        std::string ext = getImageExtensionForType(type);
+        std::string path = dir + base + "-" + type + ext;
+
+        // For "image", check for .png first, then .jpg
+        if (type == "image" && !Utils::FileSystem::exists(path))
+        {
+            path = dir + base + "-" + type + ".jpg";
+        }
+
+        return path;
+    }
+
+    std::string getImageExtensionForType(const std::string &type)
+    {
+        if (type == "fanart")
+            return ".jpg";
+        if (type == "image")
+            return ".png"; // fallback to .jpg if .png doesn't exist
+        // All others are .png
+        return ".png";
+    }
+
     std::string getImageTypeName(int value)
     {
         switch (value)
@@ -146,29 +169,5 @@ namespace GameLaunchSplash
         default:
             return "";
         }
-    }
-
-    std::string getImageExtensionForType(const std::string &type)
-    {
-        if (type == "fanart")
-            return ".jpg";
-        if (type == "image")
-            return ".png"; // fallback to .jpg if .png doesn't exist
-        // All others are .png
-        return ".png";
-    }
-
-    std::string constructImagePath(const std::string &dir, const std::string &base, const std::string &type)
-    {
-        std::string ext = getImageExtensionForType(type);
-        std::string path = dir + base + "-" + type + ext;
-
-        // For "image", check for .png first, then .jpg
-        if (type == "image" && !Utils::FileSystem::exists(path))
-        {
-            path = dir + base + "-" + type + ".jpg";
-        }
-
-        return path;
     }
 }
