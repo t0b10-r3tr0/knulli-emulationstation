@@ -1,5 +1,5 @@
 #pragma once
-#include "ExtendedGuiSettings.h"
+#include "guis/knulli/ExtendedGuiSettings.h"
 #include "components/SliderComponent.h"
 #include "components/OptionListComponent.h"
 #include "components/SwitchComponent.h"
