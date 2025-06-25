@@ -50,19 +50,19 @@ GuiGameLaunchSplash::GuiGameLaunchSplash(Window *window) : ExtendedGuiSettings(w
                               SystemConf::getInstance()->get("gamelaunchsplash.background"));
 
     // INITIAL SCALE
-    sliderInitialScale = createSlider(_("INITIAL SCALE"), 0.f, 100.f, 5.f, "", _("The initial scale of the image."), true);
+    sliderInitialScale = createSlider(_("INITIAL SCALE"), 0.f, 100.f, 5.f, "%", _("The initial scale of the image."), true);
     setConfigValueForSlider(sliderInitialScale, DEFAULT_FINAL_SCALE, "gamelaunchsplash.initialscale");
 
     // FINAL SCALE
-    sliderFinalScale = createSlider(_("FINAL SCALE"), 0.f, 100.f, 5.f, "", _("The final scale of the image."), true);
+    sliderFinalScale = createSlider(_("FINAL SCALE"), 0.f, 100.f, 5.f, "%", _("The final scale of the image."), true);
     setConfigValueForSlider(sliderFinalScale, DEFAULT_FINAL_SCALE, "gamelaunchsplash.finalscale");
 
     // Fade Time Slider
-    sliderFadeTime = createSlider(_("FADE TIME"), 0.f, 5.f, 0.1f, "", ("The amount of time (seconds) each fade should take."), true);
+    sliderFadeTime = createSlider(_("FADE TIME"), 0.f, 5.f, 0.1f, "sec", ("The amount of time (seconds) each fade should take."), true);
     setConfigValueForSlider(sliderFadeTime, DEFAULT_FADE_TIME, "gamelaunchsplash.fadetime");
 
     // Show Time Slider
-    sliderShowTime = createSlider(_("SHOW TIME"), 0.f, 10.f, 0.25f, "", _("The amount of time (seconds) to display after initial fade and before fading out."), true);
+    sliderShowTime = createSlider(_("SHOW TIME"), 0.f, 10.f, 0.25f, "sec", _("The amount of time (seconds) to display after initial fade and before fading out."), true);
     setConfigValueForSlider(sliderShowTime, DEFAULT_SHOW_TIME, "gamelaunchsplash.showtime");
 
     addSaveFunc([this]

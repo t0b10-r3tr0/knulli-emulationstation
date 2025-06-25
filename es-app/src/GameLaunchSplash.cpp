@@ -72,7 +72,10 @@ namespace GameLaunchSplash
 
             Utils::Platform::ProcessStartInfo process;
             process.command = commandToRun;
-            process.waitForExit = false;
+
+            Utils::FileSystem::writeAllText(logfile, "Running game launch splash with command: \n" + commandToRun + "\n");
+
+            process.waitForExit = true;
             process.showWindow = true;
 
             process.run();
