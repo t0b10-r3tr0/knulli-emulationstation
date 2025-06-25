@@ -48,6 +48,9 @@ private:
         void openConfigInput(); 
         void openScraperSettings();
         void openScreensaverOptions();  
+        // KNULLI - GAME LAUNCH SPLASH >>>>>
+        void openGameLaunchSplashOptions();
+        // KNULLI - GAME LAUNCH SPLASH <<<<< 
         void openSoundSettings();
         void openUISettings();
         void openUpdatesSettings();
