@@ -29,6 +29,7 @@ set(ES_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/SaveStateConfigFile.h    
 	${CMAKE_CURRENT_SOURCE_DIR}/src/CustomFeatures.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/QuickResume.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GameLaunchSplash.h
 
     # GuiComponents    
     ${CMAKE_CURRENT_SOURCE_DIR}/src/components/ScraperSearchComponent.h    
@@ -89,6 +90,7 @@ set(ES_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/UsbService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/ThreadedDiskCheck.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/KnulliThemeCheck.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiGameLaunchSplash.h
 
     # Scrapers
     ${CMAKE_CURRENT_SOURCE_DIR}/src/scrapers/Scraper.h

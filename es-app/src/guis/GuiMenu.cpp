@@ -24,7 +24,9 @@
 #include "guis/knulli/GuiDeviceSettings.h"
 #include "guis/knulli/ThreadedDiskCheck.h"
 #include "guis/knulli/CapabilityCheck.h"
+// KNULLI - GAME LAUNCH SPLASH >>>>>
 #include "guis/GuiGameLaunchSplash.h"
+// KNULLI - GAME LAUNCH SPLASH <<<<<
 #include "views/UIModeController.h"
 #include "views/ViewController.h"
 #include "CollectionSystemManager.h"

@@ -31,7 +31,7 @@ constexpr float DEFAULT_SHOW_TIME = 2.5;
 constexpr float DEFAULT_FADE_TIME = 0.75;
 
 // Constructor creates a new GuiGameLaunchSplash menu.
-GuiGameLaunchSplash::GuiGameLaunchSplash(Window *window) : ExtendedGuiSettings(window, "GAME LAUNCH SPLASHSCREEN SETTINGS")
+GuiGameLaunchSplash::GuiGameLaunchSplash(Window *window) : ExtendedGuiSettings(window, "GAME LAUNCH SPLASH SETTINGS")
 {
     // IMAGE
     foregroundImage = std::make_shared<OptionListComponent<std::string>>(mWindow, _("FOREGROUND IMAGE"));
