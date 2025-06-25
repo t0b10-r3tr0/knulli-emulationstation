@@ -6,7 +6,7 @@
 namespace GameLaunchSplash
 {
     const std::string shutdownFlag = "/var/run/shutdown.flag";
-    const std::string logfile = "/userdata/gls.txt";
+    const std::string logfile = "/userdata/system/gls.txt";
 
     bool setGameLaunchSplash(std::string foregroundImage, std::string backgroundImage, std::string initialScale, std::string finalScale, std::string fadeTime, std::string showTime)
     {
@@ -70,13 +70,15 @@ namespace GameLaunchSplash
             commandToRun = "game_launch_splash " + foregroundImage + " 0 1 0.75 3";
             commandToRun += !backgroundImage.empty() ? " " + backgroundImage : "";
 
+            Utils::FileSystem::writeAllText(logfile, "Running game launch splash with command: \n" + commandToRun + "\n");
+
             Utils::Platform::ProcessStartInfo process;
             process.command = commandToRun;
 
-            Utils::FileSystem::writeAllText(logfile, "Running game launch splash with command: \n" + commandToRun + "\n");
-
             process.waitForExit = true;
             process.showWindow = true;
+            process.stderrFilename = "stderr.ry.txt";
+            process.stdoutFilename = "stdout.ry.txt";
 
             process.run();
             executed = true;
