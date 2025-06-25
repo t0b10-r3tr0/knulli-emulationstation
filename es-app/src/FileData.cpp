@@ -34,6 +34,7 @@
 #include "Paths.h"
 #include "resources/TextureData.h"
 #include "QuickResume.h"
+#include "GameLaunchSplash.h"
 
 using namespace Utils::Platform;
 
@@ -728,6 +729,10 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 
 	ProcessStartInfo process(command);
 	process.window = hideWindow ? NULL : window;
+	
+	// KNULLI - GAME LAUNCH SPLASH >>>>>
+	GameLaunchSplash::runGameLaunchSplash(getImagePath());
+	// KNULLI - GAME LAUNCH SPLASH <<<<<
 	
 	int exitCode = process.run();
 	if (exitCode != 0)

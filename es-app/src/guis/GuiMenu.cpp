@@ -299,6 +299,13 @@ void GuiMenu::openScreensaverOptions()
 	mWindow->pushGui(new GuiGeneralScreensaverOptions(mWindow));
 }
 
+// GAME LAUNCH SPLASH >>>
+void GuiMenu::openGameLaunchSplashOptions()
+{
+	mWindow->pushGui(new GuiGameLaunchSplash(mWindow));
+}
+// GAME LAUNCH SPLASH <<<
+
 void GuiMenu::openCollectionSystemSettings()
 {
 	if (ThreadedScraper::isRunning() || ThreadedHasher::isRunning())
@@ -2679,7 +2686,6 @@ void GuiMenu::openGamesSettings()
 	s->addSaveFunc([showSaveStates] { SystemConf::getInstance()->set("global.savestates", showSaveStates->getSelected()); });
 
 	// KNULLI - QUICK RESUME MODE >>>
-	// QUICK RESUME MODE
 	auto quickresume_enabled = std::make_shared<SwitchComponent>(mWindow);
 	quickresume_enabled->setState(SystemConf::getInstance()->get("global.quickresume") == "1");
 	s->addWithDescription(_("QUICK RESUME MODE"), _("If shutdown during gameplay, boots directly into game on next startup. Works with Auto Save/Load on supported emulators."), quickresume_enabled);
@@ -3891,6 +3897,10 @@ void GuiMenu::openUISettings()
 	s->addEntry(_("SCREENSAVER SETTINGS"), true, std::bind(&GuiMenu::openScreensaverOptions, this));
 	s->addOptionList(_("LIST TRANSITION"), { { _("auto"), "auto" },{ _("fade"), "fade" },{ _("slide"), "slide" },{ _("fade & slide"), "fade & slide" },{ _("instant"), "instant" } }, "TransitionStyle", true);
 	s->addOptionList(_("GAME LAUNCH TRANSITION"), { { _("auto"), "auto" },{ _("fade"), "fade" },{ _("fast fade"), "fast fade" },{ _("slide"), "slide" },{ _("fast slide"), "fast slide" },{ _("instant"), "instant" } }, "GameTransitionStyle", true);
+
+	// GAME LAUNCH SPLASH >>>
+	s->addEntry(_("GAME LAUNCH SPLASH"), true, std::bind(&GuiMenu::openGameLaunchSplashOptions, this));
+	// GAME LAUNCH SPLASH <<<
 
 	s->addSwitch(_("GAME MEDIAS DURING FAST SCROLLING"), "ScrollLoadMedias", false);
 
