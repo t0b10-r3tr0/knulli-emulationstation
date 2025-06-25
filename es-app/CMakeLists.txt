@@ -151,6 +151,7 @@ set(ES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/SaveStateConfigFile.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/CustomFeatures.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/QuickResume.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GameLaunchSplash.cpp
 
     # GuiComponents    
     ${CMAKE_CURRENT_SOURCE_DIR}/src/components/ScraperSearchComponent.cpp	
@@ -193,7 +194,8 @@ set(ES_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiGameAchievements.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSaveState.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiFileBrowser.cpp
-	
+	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiGameLaunchSplash.cpp
+
     # Knulli-related GUIs
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/BoardCheck.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/CapabilityCheck.cpp
@@ -207,7 +209,7 @@ set(ES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/UsbService.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/ThreadedDiskCheck.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/KnulliThemeCheck.cpp
-
+    
     # Scrapers
     ${CMAKE_CURRENT_SOURCE_DIR}/src/scrapers/Scraper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/scrapers/GamesDBJSONScraper.cpp
