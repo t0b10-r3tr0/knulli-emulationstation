@@ -714,10 +714,6 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	bool hideWindow = Settings::getInstance()->getBool("HideWindow");
 	window->deinit(hideWindow);
 
-	// KNULLI - GAME LAUNCH SPLASH >>>>>
-	GameLaunchSplash::runGameLaunchSplash(getImagePath());
-	// KNULLI - GAME LAUNCH SPLASH <<<<<
-
 	const std::string rom = Utils::FileSystem::getEscapedPath(getPath());
 	const std::string basename = Utils::FileSystem::getStem(getPath());
 
@@ -730,6 +726,10 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	auto p2kConv = convertP2kFile();
 
 	mRunningGame = gameToUpdate;
+	
+	// KNULLI - GAME LAUNCH SPLASH >>>>>
+	GameLaunchSplash::runGameLaunchSplash(getImagePath());
+	// KNULLI - GAME LAUNCH SPLASH <<<<<
 
 	ProcessStartInfo process(command);
 	process.window = hideWindow ? NULL : window;
