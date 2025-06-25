@@ -6,6 +6,7 @@
 namespace GameLaunchSplash
 {
     const std::string shutdownFlag = "/var/run/shutdown.flag";
+    const std::string logfile = "/userdata/gls.txt";
 
     bool setGameLaunchSplash(std::string foregroundImage, std::string backgroundImage, std::string initialScale, std::string finalScale, std::string fadeTime, std::string showTime)
     {

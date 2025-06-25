@@ -713,7 +713,11 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 
 	bool hideWindow = Settings::getInstance()->getBool("HideWindow");
 	window->deinit(hideWindow);
-	
+
+	// KNULLI - GAME LAUNCH SPLASH >>>>>
+	GameLaunchSplash::runGameLaunchSplash(getImagePath());
+	// KNULLI - GAME LAUNCH SPLASH <<<<<
+
 	const std::string rom = Utils::FileSystem::getEscapedPath(getPath());
 	const std::string basename = Utils::FileSystem::getStem(getPath());
 
@@ -729,10 +733,6 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 
 	ProcessStartInfo process(command);
 	process.window = hideWindow ? NULL : window;
-	
-	// KNULLI - GAME LAUNCH SPLASH >>>>>
-	GameLaunchSplash::runGameLaunchSplash(getImagePath());
-	// KNULLI - GAME LAUNCH SPLASH <<<<<
 	
 	int exitCode = process.run();
 	if (exitCode != 0)
