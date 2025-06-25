@@ -26,6 +26,7 @@
 #include "guis/knulli/CapabilityCheck.h"
 // KNULLI - GAME LAUNCH SPLASH >>>>>
 #include "guis/GuiGameLaunchSplash.h"
+#include "GameLaunchSplash.h"
 // KNULLI - GAME LAUNCH SPLASH <<<<<
 #include "views/UIModeController.h"
 #include "views/ViewController.h"
