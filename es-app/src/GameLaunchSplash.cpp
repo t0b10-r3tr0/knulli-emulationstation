@@ -75,7 +75,7 @@ namespace GameLaunchSplash
             Utils::Platform::ProcessStartInfo process;
             process.command = commandToRun;
 
-            process.waitForExit = true;
+            process.waitForExit = false;
             process.showWindow = true;
 
             process.run();
