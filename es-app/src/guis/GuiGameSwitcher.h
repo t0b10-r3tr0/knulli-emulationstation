@@ -28,6 +28,7 @@ public:
 	static bool runCachedMode();
 
 	// Cache management
+	static std::string getCachePath();
 	static void saveCache(FileData* gameBeingLaunched = nullptr);
 	static bool hasCachedData();
 
@@ -88,7 +89,6 @@ private:
 	void navigateTo(int index);
 	void launchCurrentGame();
 
-	static std::string getCachePath();
 	static bool sPendingGameSwitcher;
 	static GuiGameSwitcher* sActiveInstance;
 };

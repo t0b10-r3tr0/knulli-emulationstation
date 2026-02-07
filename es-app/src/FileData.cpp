@@ -704,9 +704,7 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	if (command.empty())
 		return false;
 
-	// KNULLI - QUICK RESUME MODE >>>>>
 	QuickResume::setQuickResume(getlaunchCommand(false), getFullPath());
-	// KNULLI - QUICK RESUME MODE <<<<<
 
 	// Save Game Switcher cache for Quick Resume mode
 	// Pass the game being launched so it's included even if never played before
@@ -753,9 +751,7 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 
 	Scripting::fireEvent("game-end");
 	
-	// KNULLI - QUICK RESUME MODE >>>>>
 	QuickResume::postLaunchConditionalClean();
-	// KNULLI - QUICK RESUME MODE <<<<<
 
 	if (!hideWindow && Settings::getInstance()->getBool("HideWindowFullReinit"))
 	{

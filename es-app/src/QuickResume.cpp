@@ -3,7 +3,6 @@
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
 #include "utils/Platform.h"
-#include "Paths.h"
 #include "InputManager.h"
 #include "guis/GuiGameSwitcher.h"
 
@@ -74,7 +73,7 @@ namespace QuickResume
         {
             // Try to get system name from cache for stats tracking
             std::string systemName;
-            std::string cachePath = Paths::getUserEmulationStationPath() + "/gameswitcher_cache.json";
+            std::string cachePath = GuiGameSwitcher::getCachePath();
             if (Utils::FileSystem::exists(cachePath))
             {
                 std::ifstream file(cachePath);
