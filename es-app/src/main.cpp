@@ -43,8 +43,6 @@
 #include "HttpReq.h"
 #include "QuickResume.h"
 #include "guis/GuiGameSwitcher.h"
-#include <rapidjson/document.h>
-#include <fstream>
 
 #ifdef WIN32
 #include <Windows.h>
@@ -431,142 +429,6 @@ void playVideo()
 	window.deinit(true);
 }
 
-void launchStartupGame()
-{
-	auto gamePath = SystemConf::getInstance()->get("global.bootgame.path");
-	if (gamePath.empty() || !Utils::FileSystem::exists(gamePath))
-		return;
-
-	auto command = SystemConf::getInstance()->get("global.bootgame.cmd");
-	if (!command.empty())
-	{
-		// Try to get system name from cache for stats tracking
-		std::string systemName;
-		std::string cachePath = Paths::getUserEmulationStationPath() + "/gameswitcher_cache.json";
-		if (Utils::FileSystem::exists(cachePath))
-		{
-			std::ifstream file(cachePath);
-			if (file.is_open())
-			{
-				std::string content((std::istreambuf_iterator<char>(file)),
-				                     std::istreambuf_iterator<char>());
-				file.close();
-
-				rapidjson::Document doc;
-				doc.Parse(content.c_str());
-				if (doc.IsArray())
-				{
-					for (auto& gameObj : doc.GetArray())
-					{
-						if (gameObj.HasMember("gamePath") && gameObj["gamePath"].IsString())
-						{
-							if (std::string(gameObj["gamePath"].GetString()) == gamePath)
-							{
-								if (gameObj.HasMember("systemName") && gameObj["systemName"].IsString())
-									systemName = gameObj["systemName"].GetString();
-								break;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		InputManager::getInstance()->init();
-		command = Utils::String::replace(command, "%CONTROLLERSCONFIG%", InputManager::getInstance()->configureEmulators());
-
-		// Track start time
-		time_t startTime = time(NULL);
-
-		Utils::Platform::ProcessStartInfo(command).run();
-
-		// Calculate elapsed time and save pending stats
-		time_t endTime = time(NULL);
-		int elapsedSeconds = (int)difftime(endTime, startTime);
-
-		if (!systemName.empty())
-		{
-			GuiGameSwitcher::savePendingStats(gamePath, systemName, elapsedSeconds);
-		}
-
-		// KNULLI - QUICK RESUME MODE >>>>>
-		QuickResume::postLaunchConditionalClean();
-		// KNULLI - QUICK RESUME MODE <<<<<
-	}
-}
-
-// Returns true if a game was launched (exit ES), false if user pressed back (continue to normal ES)
-bool runCachedGameSwitcher()
-{
-	if (!GuiGameSwitcher::hasCachedData())
-	{
-		LOG(LogWarning) << "No cached Game Switcher data available";
-		return false;
-	}
-
-	LOG(LogInfo) << "Starting cached Game Switcher mode";
-
-	// Initialize minimal components
-	Window window;
-	if (!window.init(true, false))
-	{
-		LOG(LogError) << "Window failed to initialize for cached Game Switcher!";
-		return false;
-	}
-
-	// Initialize input
-	InputConfig::AssignActionButtons();
-	InputManager::getInstance()->init();
-	SDL_StopTextInput();
-
-	// Create and show cached Game Switcher
-	GuiGameSwitcher* gameSwitcher = new GuiGameSwitcher(&window, true);
-
-	// Check if Game Switcher was created successfully (has games)
-	if (!GuiGameSwitcher::isActive())
-	{
-		LOG(LogWarning) << "Cached Game Switcher has no games";
-		delete gameSwitcher;
-		window.deinit(true);
-		return false;
-	}
-
-	window.pushGui(gameSwitcher);
-
-	// Run minimal event loop
-	bool running = true;
-	bool gameLaunched = false;
-	int lastTime = SDL_GetTicks();
-
-	while (running && GuiGameSwitcher::isActive())
-	{
-		SDL_Event event;
-		if (SDL_PollEvent(&event))
-		{
-			do
-			{
-				InputManager::getInstance()->parseEvent(event, &window);
-
-				if (event.type == SDL_QUIT)
-					running = false;
-			}
-			while (SDL_PollEvent(&event));
-		}
-
-		int curTime = SDL_GetTicks();
-		int deltaTime = curTime - lastTime;
-		lastTime = curTime;
-
-		window.update(deltaTime);
-		window.render();
-		Renderer::swapBuffers();
-	}
-
-	window.deinit(true);
-
-	return false;
-}
-
 #include "utils/MathExpr.h"
 
 int main(int argc, char* argv[])
@@ -649,7 +511,7 @@ int main(int argc, char* argv[])
 #if !WIN32
 	if(enable_startup_game) {
 		// Run boot game, before Window Create for linux
-		launchStartupGame();
+		QuickResume::launchStartupGame();
 
 		// Keep showing cached Game Switcher as long as hotkey flag is set
 		// This allows chaining multiple games without fully loading ES
@@ -660,8 +522,7 @@ int main(int argc, char* argv[])
 
 			if (Settings::getInstance()->getBool("GameSwitcherEnabled"))
 			{
-				runCachedGameSwitcher();
-				// After game launched from switcher exits, loop back to check flag again
+				GuiGameSwitcher::runCachedMode();
 			}
 			else
 			{

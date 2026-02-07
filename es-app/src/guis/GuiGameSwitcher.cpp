@@ -19,12 +19,17 @@
 #include "InputManager.h"
 #include "QuickResume.h"
 
+#include "InputConfig.h"
+#include "components/SliderComponent.h"
+#include "components/SwitchComponent.h"
+
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 #include <algorithm>
 #include <fstream>
+#include <SDL_events.h>
 
 // Static members
 bool GuiGameSwitcher::sPendingGameSwitcher = false;
@@ -1237,4 +1242,170 @@ std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
 	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH")));
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 	return prompts;
+}
+
+bool GuiGameSwitcher::runCachedMode()
+{
+	if (!hasCachedData())
+	{
+		LOG(LogWarning) << "No cached Game Switcher data available";
+		return false;
+	}
+
+	LOG(LogInfo) << "Starting cached Game Switcher mode";
+
+	// Initialize minimal components
+	Window window;
+	if (!window.init(true, false))
+	{
+		LOG(LogError) << "Window failed to initialize for cached Game Switcher!";
+		return false;
+	}
+
+	// Initialize input
+	InputConfig::AssignActionButtons();
+	InputManager::getInstance()->init();
+	SDL_StopTextInput();
+
+	// Create and show cached Game Switcher
+	GuiGameSwitcher* gameSwitcher = new GuiGameSwitcher(&window, true);
+
+	// Check if Game Switcher was created successfully (has games)
+	if (!isActive())
+	{
+		LOG(LogWarning) << "Cached Game Switcher has no games";
+		delete gameSwitcher;
+		window.deinit(true);
+		return false;
+	}
+
+	window.pushGui(gameSwitcher);
+
+	// Run minimal event loop
+	bool running = true;
+	int lastTime = SDL_GetTicks();
+
+	while (running && isActive())
+	{
+		SDL_Event event;
+		if (SDL_PollEvent(&event))
+		{
+			do
+			{
+				InputManager::getInstance()->parseEvent(event, &window);
+
+				if (event.type == SDL_QUIT)
+					running = false;
+			}
+			while (SDL_PollEvent(&event));
+		}
+
+		int curTime = SDL_GetTicks();
+		int deltaTime = curTime - lastTime;
+		lastTime = curTime;
+
+		window.update(deltaTime);
+		window.render();
+		Renderer::swapBuffers();
+	}
+
+	window.deinit(true);
+
+	return false;
+}
+
+void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, bool selectPlayInfoEnable)
+{
+	bool baseMarqueeEnabled = Settings::getInstance()->getBool("GameSwitcherMarqueeEnabled");
+	bool basePlayInfoEnabled = Settings::getInstance()->getBool("GameSwitcherPlayInfoEnabled");
+
+	auto s = new GuiSettings(window, _("GAME SWITCHER SETTINGS").c_str());
+
+	// Game Switcher count setting
+	auto gameSwitcherCount = std::make_shared<SliderComponent>(window, 5.f, 25.f, 1.f, "");
+	gameSwitcherCount->setValue((float)Settings::getInstance()->getInt("GameSwitcherCount"));
+	s->addWithLabel(_("AVAILABLE SAVE COUNT"), gameSwitcherCount);
+	s->addSaveFunc([gameSwitcherCount] {
+		Settings::getInstance()->setInt("GameSwitcherCount", (int)Math::round(gameSwitcherCount->getValue()));
+	});
+
+	// Game Switcher animation speed setting
+	auto gameSwitcherSpeed = std::make_shared<SliderComponent>(window, 100.f, 1000.f, 50.f, "ms");
+	gameSwitcherSpeed->setValue((float)Settings::getInstance()->getInt("GameSwitcherAnimationSpeed"));
+	s->addWithLabel(_("ANIMATION SPEED (MS)"), gameSwitcherSpeed);
+	s->addSaveFunc([gameSwitcherSpeed] {
+		Settings::getInstance()->setInt("GameSwitcherAnimationSpeed", (int)Math::round(gameSwitcherSpeed->getValue()));
+	});
+
+	// Enable Marquee toggle
+	auto marqueeEnable = std::make_shared<SwitchComponent>(window);
+	marqueeEnable->setState(baseMarqueeEnabled);
+	s->addWithLabel(_("ENABLE MARQUEE"), marqueeEnable, selectMarqueeEnable);
+	s->addSaveFunc([marqueeEnable] {
+		Settings::getInstance()->setBool("GameSwitcherMarqueeEnabled", marqueeEnable->getState());
+	});
+
+	// Game Switcher marquee size setting - only shown when marquee is enabled
+	if (baseMarqueeEnabled)
+	{
+		auto gameSwitcherMarquee = std::make_shared<SliderComponent>(window, 20.f, 80.f, 5.f, "%");
+		gameSwitcherMarquee->setValue((float)Settings::getInstance()->getInt("GameSwitcherMarqueeSize"));
+		s->addWithLabel(_("MARQUEE SIZE"), gameSwitcherMarquee);
+		s->addSaveFunc([gameSwitcherMarquee] {
+			Settings::getInstance()->setInt("GameSwitcherMarqueeSize", (int)Math::round(gameSwitcherMarquee->getValue()));
+		});
+	}
+
+	// Dynamic menu recreation when marquee toggle changes
+	marqueeEnable->setOnChangedCallback([window, s, baseMarqueeEnabled, marqueeEnable]()
+	{
+		bool enabled = marqueeEnable->getState();
+		if (baseMarqueeEnabled != enabled)
+		{
+			Settings::getInstance()->setBool("GameSwitcherMarqueeEnabled", enabled);
+			delete s;
+			openSettings(window, true, false);
+		}
+	});
+
+	// Enable Play Information toggle
+	auto playInfoEnable = std::make_shared<SwitchComponent>(window);
+	playInfoEnable->setState(basePlayInfoEnabled);
+	s->addWithLabel(_("ENABLE PLAY INFORMATION"), playInfoEnable, selectPlayInfoEnable);
+	s->addSaveFunc([playInfoEnable] {
+		Settings::getInstance()->setBool("GameSwitcherPlayInfoEnabled", playInfoEnable->getState());
+	});
+
+	// Game Switcher info background opacity setting - only shown when play info is enabled
+	if (basePlayInfoEnabled)
+	{
+		auto gameSwitcherBgOpacity = std::make_shared<SliderComponent>(window, 0.f, 100.f, 5.f, "%");
+		gameSwitcherBgOpacity->setValue((float)Settings::getInstance()->getInt("GameSwitcherInfoBackgroundOpacity"));
+		s->addWithLabel(_("BACKGROUND OPACITY"), gameSwitcherBgOpacity);
+		s->addSaveFunc([gameSwitcherBgOpacity] {
+			Settings::getInstance()->setInt("GameSwitcherInfoBackgroundOpacity", (int)Math::round(gameSwitcherBgOpacity->getValue()));
+		});
+	}
+
+	// Enable Launch Animation toggle
+	auto launchAnimEnable = std::make_shared<SwitchComponent>(window);
+	launchAnimEnable->setState(Settings::getInstance()->getBool("GameSwitcherLaunchAnimationEnabled"));
+	s->addWithLabel(_("ENABLE LAUNCH ANIMATION"), launchAnimEnable);
+	s->addSaveFunc([launchAnimEnable] {
+		Settings::getInstance()->setBool("GameSwitcherLaunchAnimationEnabled", launchAnimEnable->getState());
+	});
+
+	// Dynamic menu recreation when play info toggle changes
+	playInfoEnable->setOnChangedCallback([window, s, basePlayInfoEnabled, playInfoEnable]()
+	{
+		bool enabled = playInfoEnable->getState();
+		if (basePlayInfoEnabled != enabled)
+		{
+			Settings::getInstance()->setBool("GameSwitcherPlayInfoEnabled", enabled);
+			delete s;
+			openSettings(window, false, true);
+		}
+	});
+
+	window->pushGui(s);
 }

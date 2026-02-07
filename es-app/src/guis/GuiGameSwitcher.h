@@ -24,6 +24,9 @@ public:
 	static void showPendingGameSwitcher(Window* window);
 	static bool isActive();
 
+	// Cached mode (lightweight Game Switcher before full ES loads)
+	static bool runCachedMode();
+
 	// Cache management
 	static void saveCache(FileData* gameBeingLaunched = nullptr);
 	static bool hasCachedData();
@@ -31,6 +34,9 @@ public:
 	// Pending stats for games launched without full ES (Quick Resume / cached mode)
 	static void savePendingStats(const std::string& gamePath, const std::string& systemName, int elapsedSeconds);
 	static void applyPendingStats();  // Called when ES fully loads
+
+	// Settings UI (called from GuiMenu)
+	static void openSettings(Window* window, bool selectMarqueeEnable = false, bool selectPlayInfoEnable = false);
 
 private:
 	static std::string getPendingStatsPath();
