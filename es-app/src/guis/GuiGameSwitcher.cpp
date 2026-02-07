@@ -1325,7 +1325,7 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 	// Game Switcher count setting
 	auto gameSwitcherCount = std::make_shared<SliderComponent>(window, 5.f, 25.f, 1.f, "");
 	gameSwitcherCount->setValue((float)Settings::getInstance()->getInt("GameSwitcherCount"));
-	s->addWithLabel(_("AVAILABLE SAVE COUNT"), gameSwitcherCount);
+	s->addWithDescription(_("AVAILABLE SAVE COUNT"), _("Maximum number of recently played games to show."), gameSwitcherCount);
 	s->addSaveFunc([gameSwitcherCount] {
 		Settings::getInstance()->setInt("GameSwitcherCount", (int)Math::round(gameSwitcherCount->getValue()));
 	});
@@ -1333,7 +1333,7 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 	// Game Switcher animation speed setting
 	auto gameSwitcherSpeed = std::make_shared<SliderComponent>(window, 100.f, 1000.f, 50.f, "ms");
 	gameSwitcherSpeed->setValue((float)Settings::getInstance()->getInt("GameSwitcherAnimationSpeed"));
-	s->addWithLabel(_("ANIMATION SPEED (MS)"), gameSwitcherSpeed);
+	s->addWithDescription(_("ANIMATION SPEED"), _("Duration of the transition animation in milliseconds."), gameSwitcherSpeed);
 	s->addSaveFunc([gameSwitcherSpeed] {
 		Settings::getInstance()->setInt("GameSwitcherAnimationSpeed", (int)Math::round(gameSwitcherSpeed->getValue()));
 	});
@@ -1341,7 +1341,7 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 	// Enable Marquee toggle
 	auto marqueeEnable = std::make_shared<SwitchComponent>(window);
 	marqueeEnable->setState(baseMarqueeEnabled);
-	s->addWithLabel(_("ENABLE MARQUEE"), marqueeEnable, selectMarqueeEnable);
+	s->addWithDescription(_("ENABLE MARQUEE"), _("Show the game's marquee image above the screenshot."), marqueeEnable, selectMarqueeEnable);
 	s->addSaveFunc([marqueeEnable] {
 		Settings::getInstance()->setBool("GameSwitcherMarqueeEnabled", marqueeEnable->getState());
 	});
@@ -1351,7 +1351,7 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 	{
 		auto gameSwitcherMarquee = std::make_shared<SliderComponent>(window, 20.f, 80.f, 5.f, "%");
 		gameSwitcherMarquee->setValue((float)Settings::getInstance()->getInt("GameSwitcherMarqueeSize"));
-		s->addWithLabel(_("MARQUEE SIZE"), gameSwitcherMarquee);
+		s->addWithDescription(_("MARQUEE SIZE"), _("Size of the marquee image as a percentage of screen width."), gameSwitcherMarquee);
 		s->addSaveFunc([gameSwitcherMarquee] {
 			Settings::getInstance()->setInt("GameSwitcherMarqueeSize", (int)Math::round(gameSwitcherMarquee->getValue()));
 		});
@@ -1372,7 +1372,7 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 	// Enable Play Information toggle
 	auto playInfoEnable = std::make_shared<SwitchComponent>(window);
 	playInfoEnable->setState(basePlayInfoEnabled);
-	s->addWithLabel(_("ENABLE PLAY INFORMATION"), playInfoEnable, selectPlayInfoEnable);
+	s->addWithDescription(_("ENABLE PLAY INFORMATION"), _("Show play count and total play time below the screenshot."), playInfoEnable, selectPlayInfoEnable);
 	s->addSaveFunc([playInfoEnable] {
 		Settings::getInstance()->setBool("GameSwitcherPlayInfoEnabled", playInfoEnable->getState());
 	});
@@ -1382,7 +1382,7 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 	{
 		auto gameSwitcherBgOpacity = std::make_shared<SliderComponent>(window, 0.f, 100.f, 5.f, "%");
 		gameSwitcherBgOpacity->setValue((float)Settings::getInstance()->getInt("GameSwitcherInfoBackgroundOpacity"));
-		s->addWithLabel(_("BACKGROUND OPACITY"), gameSwitcherBgOpacity);
+		s->addWithDescription(_("BACKGROUND OPACITY"), _("Opacity of the dark background behind play information text."), gameSwitcherBgOpacity);
 		s->addSaveFunc([gameSwitcherBgOpacity] {
 			Settings::getInstance()->setInt("GameSwitcherInfoBackgroundOpacity", (int)Math::round(gameSwitcherBgOpacity->getValue()));
 		});
@@ -1391,7 +1391,7 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 	// Enable Launch Animation toggle
 	auto launchAnimEnable = std::make_shared<SwitchComponent>(window);
 	launchAnimEnable->setState(Settings::getInstance()->getBool("GameSwitcherLaunchAnimationEnabled"));
-	s->addWithLabel(_("ENABLE LAUNCH ANIMATION"), launchAnimEnable);
+	s->addWithDescription(_("ENABLE LAUNCH ANIMATION"), _("Fade out marquee and play information before launching a game."), launchAnimEnable);
 	s->addSaveFunc([launchAnimEnable] {
 		Settings::getInstance()->setBool("GameSwitcherLaunchAnimationEnabled", launchAnimEnable->getState());
 	});
