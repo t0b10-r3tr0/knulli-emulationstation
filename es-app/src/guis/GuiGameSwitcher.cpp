@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <fstream>
 #include <SDL_events.h>
+#include <SDL_timer.h>
 
 // Static members
 bool GuiGameSwitcher::sPendingGameSwitcher = false;
