@@ -510,6 +510,8 @@ int main(int argc, char* argv[])
 
 #if !WIN32
 	if(enable_startup_game) {
+		bool hadBootGame = !SystemConf::getInstance()->get("global.bootgame.path").empty();
+
 		// Run boot game, before Window Create for linux
 		QuickResume::launchStartupGame();
 
@@ -528,6 +530,14 @@ int main(int argc, char* argv[])
 			{
 				break;
 			}
+		}
+
+		// Boot to Game Switcher if enabled and no Quick Resume game was active
+		if (!hadBootGame &&
+			Settings::getInstance()->getBool("GameSwitcherEnabled") &&
+			Settings::getInstance()->getBool("GameSwitcherBootEnabled"))
+		{
+			GuiGameSwitcher::runCachedMode();
 		}
 	}
 #endif
