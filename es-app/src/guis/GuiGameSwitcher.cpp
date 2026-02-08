@@ -837,11 +837,18 @@ void GuiGameSwitcher::updateDisplayForComponents(ImageComponent* screenshot, Ima
 		}
 		else
 		{
-			// No marquee image available, show game name as fallback
 			marquee->setImage("");
 			marquee->setVisible(false);
-			gameName->setText(gameNameStr);
-			gameName->setVisible(true);
+			bool fallback = Settings::getInstance()->getBool("GameSwitcherMarqueeFallback");
+			if (fallback)
+			{
+				gameName->setText(gameNameStr);
+				gameName->setVisible(true);
+			}
+			else
+			{
+				gameName->setVisible(false);
+			}
 		}
 	}
 	else
@@ -1354,6 +1361,13 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 		s->addWithDescription(_("MARQUEE SIZE"), _("Size of the marquee image as a percentage of screen width."), gameSwitcherMarquee);
 		s->addSaveFunc([gameSwitcherMarquee] {
 			Settings::getInstance()->setInt("GameSwitcherMarqueeSize", (int)Math::round(gameSwitcherMarquee->getValue()));
+		});
+
+		auto marqueeFallback = std::make_shared<SwitchComponent>(window);
+		marqueeFallback->setState(Settings::getInstance()->getBool("GameSwitcherMarqueeFallback"));
+		s->addWithDescription(_("SHOW GAME NAME"), _("Display the game name as text when no marquee image is available."), marqueeFallback);
+		s->addSaveFunc([marqueeFallback] {
+			Settings::getInstance()->setBool("GameSwitcherMarqueeFallback", marqueeFallback->getState());
 		});
 	}
 
