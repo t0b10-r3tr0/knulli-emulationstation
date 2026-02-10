@@ -641,8 +641,12 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	{
 		HelpStyle helpStyle = getHelpStyle();
 		float helpBarY = helpStyle.position.y();
-		float gap = screenH * 0.01f;
-		playInfoY = helpBarY - gap - playInfoHeight;
+
+		// Account for the help background padding above the text
+		float helpContentH = helpStyle.font ? Math::round(helpStyle.font->getLetterHeight() * 1.25f) : screenH * 0.03f;
+		float helpBgPadding = helpContentH * 0.4f;
+		float gap = screenH * 0.015f;
+		playInfoY = helpBarY - helpBgPadding - gap - playInfoHeight;
 	}
 	else
 	{
@@ -1287,6 +1291,17 @@ std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
 	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH")));
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 	return prompts;
+}
+
+HelpStyle GuiGameSwitcher::getHelpStyle()
+{
+	HelpStyle style = GuiComponent::getHelpStyle();
+
+	// Always center help prompts horizontally in Game Switcher
+	style.position = Vector2f(Renderer::getScreenWidth() / 2.0f, style.position.y());
+	style.origin = Vector2f(0.5f, 0.0f);
+
+	return style;
 }
 
 bool GuiGameSwitcher::runCachedMode()

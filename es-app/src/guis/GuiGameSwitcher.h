@@ -17,6 +17,7 @@ public:
 	void update(int deltaTime) override;
 	void render(const Transform4x4f& transform) override;
 	std::vector<HelpPrompt> getHelpPrompts() override;
+	HelpStyle getHelpStyle() override;
 
 	// Static methods for pending Game Switcher (triggered while game is running)
 	static void setPendingGameSwitcher(bool pending);
