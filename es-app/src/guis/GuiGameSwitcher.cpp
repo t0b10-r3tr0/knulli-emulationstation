@@ -631,13 +631,27 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mGameName->setFont(font);
 
 	// Create current play info text (bottom center)
-	// Move up when help prompts are visible to avoid overlap
+	// Move up when help prompts are visible to avoid overlap with help bar
+	float screenH = (float)Renderer::getScreenHeight();
+	float playInfoHeight = screenH * 0.08f;
+	float playInfoY;
+
 	bool helpEnabled = Settings::getInstance()->getBool("GameSwitcherHelpEnabled");
-	float playInfoY = helpEnabled ? 0.86f : 0.90f;
+	if (helpEnabled)
+	{
+		HelpStyle helpStyle = getHelpStyle();
+		float helpBarY = helpStyle.position.y();
+		float gap = screenH * 0.01f;
+		playInfoY = helpBarY - gap - playInfoHeight;
+	}
+	else
+	{
+		playInfoY = screenH * 0.90f;
+	}
 
 	mPlayInfo = new TextComponent(mWindow);
-	mPlayInfo->setPosition(0, Renderer::getScreenHeight() * playInfoY);
-	mPlayInfo->setSize((float)Renderer::getScreenWidth(), Renderer::getScreenHeight() * 0.08f);
+	mPlayInfo->setPosition(0, playInfoY);
+	mPlayInfo->setSize((float)Renderer::getScreenWidth(), playInfoHeight);
 	mPlayInfo->setHorizontalAlignment(ALIGN_CENTER);
 	mPlayInfo->setVerticalAlignment(ALIGN_CENTER);
 	mPlayInfo->setColor(0xD0D0D0FF);
@@ -670,8 +684,8 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 
 	// Create previous play info text (for animation)
 	mPrevPlayInfo = new TextComponent(mWindow);
-	mPrevPlayInfo->setPosition(0, Renderer::getScreenHeight() * playInfoY);
-	mPrevPlayInfo->setSize((float)Renderer::getScreenWidth(), Renderer::getScreenHeight() * 0.08f);
+	mPrevPlayInfo->setPosition(0, playInfoY);
+	mPrevPlayInfo->setSize((float)Renderer::getScreenWidth(), playInfoHeight);
 	mPrevPlayInfo->setHorizontalAlignment(ALIGN_CENTER);
 	mPrevPlayInfo->setVerticalAlignment(ALIGN_CENTER);
 	mPrevPlayInfo->setColor(0xD0D0D0FF);
@@ -1243,7 +1257,22 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 
 	// Render help prompts early to bypass Window's fullScreenMenus suppression
 	if (Settings::getInstance()->getBool("GameSwitcherHelpEnabled"))
+	{
+		// Draw a semi-transparent background strip behind the help prompts
+		HelpStyle style = getHelpStyle();
+		if (style.font)
+		{
+			float helpHeight = Math::round(style.font->getLetterHeight() * 1.25f);
+			float padding = helpHeight * 0.4f;
+			float bgY = style.position.y() - padding;
+			float bgHeight = helpHeight + (padding * 2.0f);
+
+			Renderer::setMatrix(Transform4x4f::Identity());
+			Renderer::drawRect(0.0f, bgY, screenWidth, bgHeight, infoBgColor, infoBgColor);
+		}
+
 		mWindow->renderHelpPromptsEarly(transform);
+	}
 }
 
 std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
