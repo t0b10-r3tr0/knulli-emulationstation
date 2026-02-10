@@ -631,8 +631,12 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mGameName->setFont(font);
 
 	// Create current play info text (bottom center)
+	// Move up when help prompts are visible to avoid overlap
+	bool helpEnabled = Settings::getInstance()->getBool("GameSwitcherHelpEnabled");
+	float playInfoY = helpEnabled ? 0.86f : 0.90f;
+
 	mPlayInfo = new TextComponent(mWindow);
-	mPlayInfo->setPosition(0, Renderer::getScreenHeight() * 0.90f);
+	mPlayInfo->setPosition(0, Renderer::getScreenHeight() * playInfoY);
 	mPlayInfo->setSize((float)Renderer::getScreenWidth(), Renderer::getScreenHeight() * 0.08f);
 	mPlayInfo->setHorizontalAlignment(ALIGN_CENTER);
 	mPlayInfo->setVerticalAlignment(ALIGN_CENTER);
@@ -666,7 +670,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 
 	// Create previous play info text (for animation)
 	mPrevPlayInfo = new TextComponent(mWindow);
-	mPrevPlayInfo->setPosition(0, Renderer::getScreenHeight() * 0.90f);
+	mPrevPlayInfo->setPosition(0, Renderer::getScreenHeight() * playInfoY);
 	mPrevPlayInfo->setSize((float)Renderer::getScreenWidth(), Renderer::getScreenHeight() * 0.08f);
 	mPrevPlayInfo->setHorizontalAlignment(ALIGN_CENTER);
 	mPrevPlayInfo->setVerticalAlignment(ALIGN_CENTER);
@@ -1242,8 +1246,8 @@ std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
 {
 	std::vector<HelpPrompt> prompts;
 
-	// Hide help prompts in cached mode (Quick Resume boot)
-	if (mCachedMode)
+	// Hide help prompts if disabled in settings
+	if (!Settings::getInstance()->getBool("GameSwitcherHelpEnabled"))
 		return prompts;
 
 	prompts.push_back(HelpPrompt("left/right", _("NAVIGATE")));
@@ -1408,6 +1412,14 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 	s->addWithDescription(_("ENABLE LAUNCH ANIMATION"), _("Fade out marquee and play information before launching a game."), launchAnimEnable);
 	s->addSaveFunc([launchAnimEnable] {
 		Settings::getInstance()->setBool("GameSwitcherLaunchAnimationEnabled", launchAnimEnable->getState());
+	});
+
+	// Show Help Prompts toggle
+	auto helpEnable = std::make_shared<SwitchComponent>(window);
+	helpEnable->setState(Settings::getInstance()->getBool("GameSwitcherHelpEnabled"));
+	s->addWithDescription(_("SHOW NAVIGATION HELP"), _("Show button shortcuts at the bottom of the screen."), helpEnable);
+	s->addSaveFunc([helpEnable] {
+		Settings::getInstance()->setBool("GameSwitcherHelpEnabled", helpEnable->getState());
 	});
 
 	// Boot to Game Switcher toggle

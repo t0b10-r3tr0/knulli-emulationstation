@@ -247,6 +247,7 @@ void Settings::setDefaults()
 	mIntMap["GameSwitcherInfoBackgroundOpacity"] = 75;
 	mBoolMap["GameSwitcherLaunchAnimationEnabled"] = true;
 	mBoolMap["GameSwitcherBootEnabled"] = false;
+	mBoolMap["GameSwitcherHelpEnabled"] = true;
 	mBoolMap["SlideshowScreenSaverStretch"] = false;
 	mBoolMap["SlideshowScreenSaverCustomImageSource"] = false;
 	mStringMap["SlideshowScreenSaverImageFilter"] = ".png,.jpg";
