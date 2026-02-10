@@ -1240,6 +1240,10 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 		mPlayInfo->setOpacity(currOpacity);
 		mPlayInfo->render(currTransform);
 	}
+
+	// Render help prompts early to bypass Window's fullScreenMenus suppression
+	if (Settings::getInstance()->getBool("GameSwitcherHelpEnabled"))
+		mWindow->renderHelpPromptsEarly(transform);
 }
 
 std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
@@ -1293,6 +1297,12 @@ bool GuiGameSwitcher::runCachedMode()
 
 	window.pushGui(gameSwitcher);
 
+	// Suppress clock/battery/controller overlays during cached mode
+	bool origDrawClock = Settings::DrawClock();
+	bool origShowController = Settings::ShowControllerActivity();
+	Settings::setDrawClock(false);
+	Settings::setShowControllerActivity(false);
+
 	// Run minimal event loop
 	bool running = true;
 	int lastTime = SDL_GetTicks();
@@ -1320,6 +1330,10 @@ bool GuiGameSwitcher::runCachedMode()
 		window.render();
 		Renderer::swapBuffers();
 	}
+
+	// Restore overlay settings
+	Settings::setDrawClock(origDrawClock);
+	Settings::setShowControllerActivity(origShowController);
 
 	window.deinit(true);
 
