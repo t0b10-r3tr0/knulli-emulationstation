@@ -2714,7 +2714,7 @@ void GuiMenu::openGamesSettings(bool selectGameSwitcherEnable)
 	// Game Switcher enable toggle
 	auto gameSwitcherEnable = std::make_shared<SwitchComponent>(mWindow);
 	gameSwitcherEnable->setState(baseGameSwitcherEnabled);
-	s->addWithLabel(_("ENABLE GAME SWITCHER"), gameSwitcherEnable, selectGameSwitcherEnable);
+	s->addWithDescription(_("ENABLE GAME SWITCHER"), _("Quickly switch between recently played games using a hotkey. Works best with Auto Save/Load and Quick Resume Mode."), gameSwitcherEnable, selectGameSwitcherEnable);
 	s->addSaveFunc([gameSwitcherEnable] {
 		Settings::getInstance()->setBool("GameSwitcherEnabled", gameSwitcherEnable->getState());
 	});
