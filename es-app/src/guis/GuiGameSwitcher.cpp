@@ -1269,7 +1269,7 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 			float helpHeight = Math::round(style.font->getLetterHeight() * 1.25f);
 			float padding = helpHeight * 0.4f;
 			float bgY = style.position.y() - padding;
-			float bgHeight = helpHeight + (padding * 2.0f);
+			float bgHeight = screenHeight - bgY;
 
 			Renderer::setMatrix(Transform4x4f::Identity());
 			Renderer::drawRect(0.0f, bgY, screenWidth, bgHeight, infoBgColor, infoBgColor);
