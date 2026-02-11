@@ -49,11 +49,11 @@ private:
         void openScraperSettings();
         void openScreensaverOptions();  
         void openSoundSettings();
-        void openUISettings(bool selectGameSwitcherEnable = false);
+        void openUISettings();
         void openUpdatesSettings();
-        
+
         void openSystemSettings();
-        void openGamesSettings();       
+        void openGamesSettings(bool selectGameSwitcherEnable = false);       
         void openNetworkSettings(bool selectWifiEnable = false);        
         void openQuitMenu();
         void openSystemInformations();

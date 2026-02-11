@@ -2607,9 +2607,11 @@ void GuiMenu::addFeatures(const VectorEx<CustomFeature>& features, Window* windo
 	}
 }
 
-void GuiMenu::openGamesSettings()
+void GuiMenu::openGamesSettings(bool selectGameSwitcherEnable)
 {
 	Window* window = mWindow;
+
+	bool baseGameSwitcherEnabled = Settings::getInstance()->getBool("GameSwitcherEnabled");
 
 	auto s = new GuiSettings(mWindow, _("GAME SETTINGS").c_str());
 
@@ -2708,6 +2710,32 @@ void GuiMenu::openGamesSettings()
 	s->addWithDescription(_("QUICK RESUME MODE"), _("If shutdown during gameplay, boots directly into game on next startup. Works with Auto Save/Load on supported emulators."), quickresume_enabled);
 	s->addSaveFunc([quickresume_enabled] { SystemConf::getInstance()->set("global.quickresume", quickresume_enabled->getState() ? "1" : ""); });
 	// KNULLI - QUICK RESUME MODE <<<
+
+	// Game Switcher enable toggle
+	auto gameSwitcherEnable = std::make_shared<SwitchComponent>(mWindow);
+	gameSwitcherEnable->setState(baseGameSwitcherEnabled);
+	s->addWithLabel(_("ENABLE GAME SWITCHER"), gameSwitcherEnable, selectGameSwitcherEnable);
+	s->addSaveFunc([gameSwitcherEnable] {
+		Settings::getInstance()->setBool("GameSwitcherEnabled", gameSwitcherEnable->getState());
+	});
+
+	// Game Switcher Settings submenu - only visible when enabled
+	if (baseGameSwitcherEnabled)
+	{
+		s->addEntry(_("GAME SWITCHER SETTINGS"), true, [window]() { GuiGameSwitcher::openSettings(window); });
+	}
+
+	// Dynamic menu recreation when toggle changes
+	gameSwitcherEnable->setOnChangedCallback([this, s, baseGameSwitcherEnabled, gameSwitcherEnable]()
+	{
+		bool enabled = gameSwitcherEnable->getState();
+		if (baseGameSwitcherEnabled != enabled)
+		{
+			Settings::getInstance()->setBool("GameSwitcherEnabled", enabled);
+			delete s;
+			openGamesSettings(true);
+		}
+	});
 
 	s->addGroup(_("DEFAULT GLOBAL SETTINGS"));
 
@@ -3795,12 +3823,10 @@ void GuiMenu::openThemeConfiguration(Window* mWindow, GuiComponent* s, std::shar
 	mWindow->pushGui(themeconfig);
 }
 
-void GuiMenu::openUISettings(bool selectGameSwitcherEnable)
+void GuiMenu::openUISettings()
 {
 	auto pthis = this;
 	Window* window = mWindow;
-
-	bool baseGameSwitcherEnabled = Settings::getInstance()->getBool("GameSwitcherEnabled");
 
 	auto s = new GuiSettings(mWindow, _("USER INTERFACE SETTINGS").c_str());
 
@@ -3914,32 +3940,6 @@ void GuiMenu::openUISettings(bool selectGameSwitcherEnable)
 
 	s->addGroup(_("DISPLAY OPTIONS"));
 	s->addEntry(_("SCREENSAVER SETTINGS"), true, std::bind(&GuiMenu::openScreensaverOptions, this));
-
-	// Game Switcher enable toggle
-	auto gameSwitcherEnable = std::make_shared<SwitchComponent>(mWindow);
-	gameSwitcherEnable->setState(baseGameSwitcherEnabled);
-	s->addWithLabel(_("ENABLE GAME SWITCHER"), gameSwitcherEnable, selectGameSwitcherEnable);
-	s->addSaveFunc([gameSwitcherEnable] {
-		Settings::getInstance()->setBool("GameSwitcherEnabled", gameSwitcherEnable->getState());
-	});
-
-	// Game Switcher Settings submenu - only visible when enabled
-	if (baseGameSwitcherEnabled)
-	{
-		s->addEntry(_("GAME SWITCHER SETTINGS"), true, [window]() { GuiGameSwitcher::openSettings(window); });
-	}
-
-	// Dynamic menu recreation when toggle changes
-	gameSwitcherEnable->setOnChangedCallback([this, s, baseGameSwitcherEnabled, gameSwitcherEnable]()
-	{
-		bool enabled = gameSwitcherEnable->getState();
-		if (baseGameSwitcherEnabled != enabled)
-		{
-			Settings::getInstance()->setBool("GameSwitcherEnabled", enabled);
-			delete s;
-			openUISettings(true);
-		}
-	});
 
 	s->addOptionList(_("LIST TRANSITION"), { { _("auto"), "auto" },{ _("fade"), "fade" },{ _("slide"), "slide" },{ _("fade & slide"), "fade & slide" },{ _("instant"), "instant" } }, "TransitionStyle", true);
 	s->addOptionList(_("GAME LAUNCH TRANSITION"), { { _("auto"), "auto" },{ _("fade"), "fade" },{ _("fast fade"), "fast fade" },{ _("slide"), "slide" },{ _("fast slide"), "fast slide" },{ _("instant"), "instant" } }, "GameTransitionStyle", true);
