@@ -874,8 +874,8 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 		// Symmetric padding: top padding equals distance from text bottom to screen bottom
 		float helpContentH = helpStyle.font ? Math::round(helpStyle.font->getLetterHeight() * 1.25f) : mScreenHeight * 0.03f;
 		float helpBgPadding = mScreenHeight - helpBarY - helpContentH;
-		float gap = mScreenHeight * 0.015f;
-		playInfoY = helpBarY - helpBgPadding - gap - playInfoHeight;
+		// Gap between play info background and help background equals the help bar's bottom padding
+		playInfoY = helpBarY - helpBgPadding - helpBgPadding - playInfoHeight;
 	}
 	else
 	{
@@ -1375,8 +1375,7 @@ bool GuiGameSwitcher::input(InputConfig* config, Input input)
 	// X button - track press/release for long-press removal (must see both events)
 	if (mXButton.isShortPressed(config, input))
 	{
-		if (!mCachedMode)
-			mWindow->displayNotificationMessage(_("Hold to remove"), 1500);
+		mWindow->displayNotificationMessage(_("Hold to remove"), 1500);
 		return true;
 	}
 
