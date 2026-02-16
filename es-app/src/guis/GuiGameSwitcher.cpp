@@ -1996,7 +1996,7 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 	});
 
 	s->addGroup(_("TOOLS"));
-	s->addEntry(_("CLEAR EXCLUDED GAMES"), false, [window]()
+	s->addEntry(_("CLEAR REMOVED GAMES"), false, [window]()
 	{
 		window->pushGui(new GuiMsgBox(window,
 			_("RESTORE ALL REMOVED GAMES TO GAME SWITCHER?"),
@@ -2004,7 +2004,7 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 			_("NO"), nullptr));
 	});
 
-	s->addEntry(_("CLEAR INCLUDED GAMES"), false, [window]()
+	s->addEntry(_("CLEAR PINNED GAMES"), false, [window]()
 	{
 		window->pushGui(new GuiMsgBox(window,
 			_("REMOVE ALL PINNED GAMES FROM GAME SWITCHER?"),
