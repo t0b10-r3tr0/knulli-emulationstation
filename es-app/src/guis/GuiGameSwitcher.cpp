@@ -19,6 +19,7 @@
 #include "Paths.h"
 #include "InputManager.h"
 #include "QuickResume.h"
+#include "SystemConf.h"
 
 #include "InputConfig.h"
 #include "components/SliderComponent.h"
@@ -673,6 +674,49 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 		if (isIncluded(game->getFullPath()))
 			gameObj.AddMember("included", true, allocator);
 
+		// Save state previews (pre-format labels at cache time)
+		auto* repo = game->getSourceFileData()->getSystem()->getSaveStateRepository();
+		if (repo != nullptr)
+		{
+			bool supportsIncrementalSS = SystemConf::getIncrementalSaveStates();
+			bool incrementalSS = supportsIncrementalSS && repo->supportsIncrementalSaveStates();
+			auto states = repo->getSaveStates(game);
+
+			std::sort(states.begin(), states.end(), [&](const SaveState* a, const SaveState* b)
+			{
+				if (a->config != nullptr && b->config != nullptr && !a->config->equals(b->config))
+					return a->config->isActiveConfig(game);
+				if (supportsIncrementalSS && (a->config != nullptr ? a->config->incremental : incrementalSS))
+					return a->creationDate >= b->creationDate;
+				return a->slot < b->slot;
+			});
+
+			rapidjson::Value saveStatesArr(rapidjson::kArrayType);
+			for (auto* state : states)
+			{
+				std::string ssScreenshot = state->getScreenShot();
+				if (ssScreenshot.empty() || !Utils::FileSystem::exists(ssScreenshot))
+					continue;
+
+				std::string label;
+				if (state->slot == -1)
+					label = _("AUTO SAVE") + std::string(" - ") + state->creationDate.toLocalTimeString();
+				else if (supportsIncrementalSS && (state->config != nullptr ? state->config->incremental : incrementalSS))
+					label = state->creationDate.toLocalTimeString();
+				else
+					label = _("SLOT") + std::string(" ") + std::to_string(state->slot) + std::string(" - ") + state->creationDate.toLocalTimeString();
+
+				rapidjson::Value ssObj(rapidjson::kObjectType);
+				ssObj.AddMember("screenshotPath", rapidjson::Value(ssScreenshot.c_str(), allocator), allocator);
+				ssObj.AddMember("label", rapidjson::Value(label.c_str(), allocator), allocator);
+				ssObj.AddMember("slot", state->slot, allocator);
+				saveStatesArr.PushBack(ssObj, allocator);
+			}
+
+			if (saveStatesArr.Size() > 0)
+				gameObj.AddMember("saveStates", saveStatesArr, allocator);
+		}
+
 		doc.PushBack(gameObj, allocator);
 	}
 
@@ -761,6 +805,34 @@ void GuiGameSwitcher::loadFromCache()
 		if (gameObj.HasMember("included") && gameObj["included"].IsBool())
 			item.included = gameObj["included"].GetBool();
 
+		item.currentSaveStateIndex = -1;
+
+		// Parse save state previews
+		if (gameObj.HasMember("saveStates") && gameObj["saveStates"].IsArray())
+		{
+			for (auto& ssObj : gameObj["saveStates"].GetArray())
+			{
+				if (!ssObj.IsObject())
+					continue;
+
+				SaveStatePreview preview;
+				preview.saveState = nullptr;  // Cached mode - no live pointer
+
+				if (ssObj.HasMember("screenshotPath") && ssObj["screenshotPath"].IsString())
+					preview.screenshotPath = ssObj["screenshotPath"].GetString();
+
+				if (ssObj.HasMember("label") && ssObj["label"].IsString())
+					preview.label = ssObj["label"].GetString();
+
+				preview.slot = -99;
+				if (ssObj.HasMember("slot") && ssObj["slot"].IsInt())
+					preview.slot = ssObj["slot"].GetInt();
+
+				if (!preview.screenshotPath.empty())
+					item.saveStates.push_back(preview);
+			}
+		}
+
 		if (!isExcluded(item.gamePath))
 			mGames.push_back(item);
 	}
@@ -779,6 +851,8 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mMarquee = nullptr;
 	mGameName = nullptr;
 	mPlayInfo = nullptr;
+	mSaveStateLabel = nullptr;
+	mPrevSaveStateLabel = nullptr;
 	mIncludedIndicator = nullptr;
 	mPrevIncludedIndicator = nullptr;
 	mPrevScreenshot = nullptr;
@@ -801,6 +875,12 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mPrevPlayInfoBgW = 0.0f;
 	mPrevPlayInfoBgH = 0.0f;
 	mPrevPlayInfoBgY = 0.0f;
+	mSaveStateLabelBgW = 0.0f;
+	mSaveStateLabelBgH = 0.0f;
+	mSaveStateLabelBgY = 0.0f;
+	mPrevSaveStateLabelBgW = 0.0f;
+	mPrevSaveStateLabelBgH = 0.0f;
+	mPrevSaveStateLabelBgY = 0.0f;
 	mAnimationDuration = Settings::getInstance()->getInt("GameSwitcherAnimationSpeed");
 	if (mAnimationDuration < 50)
 		mAnimationDuration = 50;  // Minimum 50ms to prevent division by zero or too-fast animations
@@ -891,6 +971,32 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mPlayInfo->setGlowColor(0x00000060);
 	mPlayInfo->setGlowSize(2);
 	mPlayInfo->setFont(infoFont);
+
+	// Create save state label (positioned above play info)
+	float saveStateLabelHeight = playInfoHeight;
+	float saveStateLabelY = playInfoY - saveStateLabelHeight;
+
+	mSaveStateLabel = new TextComponent(mWindow);
+	mSaveStateLabel->setPosition(0, saveStateLabelY);
+	mSaveStateLabel->setSize(mScreenWidth, saveStateLabelHeight);
+	mSaveStateLabel->setHorizontalAlignment(ALIGN_CENTER);
+	mSaveStateLabel->setVerticalAlignment(ALIGN_CENTER);
+	mSaveStateLabel->setColor(0xFFFFFFFF);
+	mSaveStateLabel->setGlowColor(0x00000060);
+	mSaveStateLabel->setGlowSize(2);
+	mSaveStateLabel->setFont(infoFont);
+	mSaveStateLabel->setVisible(false);
+
+	mPrevSaveStateLabel = new TextComponent(mWindow);
+	mPrevSaveStateLabel->setPosition(0, saveStateLabelY);
+	mPrevSaveStateLabel->setSize(mScreenWidth, saveStateLabelHeight);
+	mPrevSaveStateLabel->setHorizontalAlignment(ALIGN_CENTER);
+	mPrevSaveStateLabel->setVerticalAlignment(ALIGN_CENTER);
+	mPrevSaveStateLabel->setColor(0xFFFFFFFF);
+	mPrevSaveStateLabel->setGlowColor(0x00000060);
+	mPrevSaveStateLabel->setGlowSize(2);
+	mPrevSaveStateLabel->setFont(infoFont);
+	mPrevSaveStateLabel->setVisible(false);
 
 	// Create previous screenshot component (for animation)
 	mPrevScreenshot = new ImageComponent(mWindow, true);
@@ -995,6 +1101,10 @@ GuiGameSwitcher::~GuiGameSwitcher()
 		delete mGameName;
 	if (mPlayInfo != nullptr)
 		delete mPlayInfo;
+	if (mSaveStateLabel != nullptr)
+		delete mSaveStateLabel;
+	if (mPrevSaveStateLabel != nullptr)
+		delete mPrevSaveStateLabel;
 	if (mIncludedIndicator != nullptr)
 		delete mIncludedIndicator;
 	if (mPrevIncludedIndicator != nullptr)
@@ -1070,6 +1180,8 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 	});
 
 	// Build the items list
+	bool supportsIncrementalSaveStates = SystemConf::getIncrementalSaveStates();
+
 	mGames.reserve(finalGames.size());
 	for (auto game : finalGames)
 	{
@@ -1079,6 +1191,50 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 		item.playCount = 0;
 		item.gameTime = 0;
 		item.included = isIncluded(game->getFullPath());
+		item.currentSaveStateIndex = -1;
+
+		// Populate save state previews
+		auto* repo = game->getSourceFileData()->getSystem()->getSaveStateRepository();
+		if (repo != nullptr)
+		{
+			auto states = repo->getSaveStates(game);
+			bool incrementalSaveStates = supportsIncrementalSaveStates && repo->supportsIncrementalSaveStates();
+
+			// Sort: match GuiSaveState logic — auto-save first, then by slot (or by creationDate if incremental)
+			std::sort(states.begin(), states.end(), [&](const SaveState* a, const SaveState* b)
+			{
+				if (a->config != nullptr && b->config != nullptr && !a->config->equals(b->config))
+					return a->config->isActiveConfig(game);
+
+				if (supportsIncrementalSaveStates && (a->config != nullptr ? a->config->incremental : incrementalSaveStates))
+					return a->creationDate >= b->creationDate;
+
+				return a->slot < b->slot;
+			});
+
+			for (auto* state : states)
+			{
+				std::string screenshot = state->getScreenShot();
+				if (screenshot.empty() || !Utils::FileSystem::exists(screenshot))
+					continue;
+
+				SaveStatePreview preview;
+				preview.screenshotPath = screenshot;
+				preview.slot = state->slot;
+				preview.saveState = state;
+
+				// Build label (matches GuiSaveState formatting)
+				if (state->slot == -1)
+					preview.label = _("AUTO SAVE") + std::string(" - ") + state->creationDate.toLocalTimeString();
+				else if (supportsIncrementalSaveStates && (state->config != nullptr ? state->config->incremental : incrementalSaveStates))
+					preview.label = state->creationDate.toLocalTimeString();
+				else
+					preview.label = _("SLOT") + std::string(" ") + std::to_string(state->slot) + std::string(" - ") + state->creationDate.toLocalTimeString();
+
+				item.saveStates.push_back(preview);
+			}
+		}
+
 		mGames.push_back(item);
 	}
 
@@ -1253,6 +1409,43 @@ void GuiGameSwitcher::updateDisplayForComponents(ImageComponent* screenshot, Ima
 		}
 	}
 
+	// Update save state label visibility
+	TextComponent* ssLabel = (playInfo == mPlayInfo) ? mSaveStateLabel : mPrevSaveStateLabel;
+	if (ssLabel != nullptr)
+	{
+		if (item.currentSaveStateIndex >= 0 && item.currentSaveStateIndex < (int)item.saveStates.size())
+		{
+			ssLabel->setText(item.saveStates[item.currentSaveStateIndex].label);
+			ssLabel->setVisible(true);
+
+			// Cache label background dimensions
+			float padding = mScreenHeight * 0.015f;
+			auto ssFont = ssLabel->getFont();
+			float ssTW = ssFont->sizeText(ssLabel->getText()).x();
+			float ssTH = ssFont->getHeight();
+			float ssBgW = ssTW + (padding * 2);
+			float ssBgH = ssTH + (padding * 2);
+			float ssBgY = ssLabel->getPosition().y() + (ssLabel->getSize().y() - ssBgH) / 2.0f;
+
+			if (ssLabel == mSaveStateLabel)
+			{
+				mSaveStateLabelBgW = ssBgW;
+				mSaveStateLabelBgH = ssBgH;
+				mSaveStateLabelBgY = ssBgY;
+			}
+			else
+			{
+				mPrevSaveStateLabelBgW = ssBgW;
+				mPrevSaveStateLabelBgH = ssBgH;
+				mPrevSaveStateLabelBgY = ssBgY;
+			}
+		}
+		else
+		{
+			ssLabel->setVisible(false);
+		}
+	}
+
 	// Update included indicator (star)
 	TextComponent* indicator = (playInfo == mPlayInfo) ? mIncludedIndicator : mPrevIncludedIndicator;
 	if (indicator != nullptr)
@@ -1290,16 +1483,58 @@ void GuiGameSwitcher::navigateTo(int index)
 	else
 		mAnimationDirection = -1; // Prev game - slide right
 
+	// Reset save state selection on the old game
+	mGames[oldIndex].currentSaveStateIndex = -1;
+	mSaveStateLabel->setVisible(false);
+
 	// Copy current display to previous components
 	updateDisplayForComponents(mPrevScreenshot, mPrevMarquee, mPrevGameName, mPrevPlayInfo, oldIndex);
+	mPrevSaveStateLabel->setVisible(false);
 
 	// Update current index and display
 	mCurrentIndex = index;
 	updateDisplay();
+	updateHelpPrompts();
 
 	// Start animation
 	mAnimating = true;
 	mAnimationProgress = 0.0f;
+}
+
+void GuiGameSwitcher::navigateToSaveState(int newIndex)
+{
+	if (mGames.empty() || mCurrentIndex < 0 || mCurrentIndex >= (int)mGames.size())
+		return;
+
+	GameItem& item = mGames[mCurrentIndex];
+	item.currentSaveStateIndex = newIndex;
+
+	if (newIndex == -1)
+	{
+		// Default view — show original game screenshot, hide label
+		if (!item.screenshotPath.empty())
+			mScreenshot->setImage(item.screenshotPath);
+		else
+			mScreenshot->setImage("");
+		mSaveStateLabel->setVisible(false);
+	}
+	else
+	{
+		// Show save state screenshot and label
+		const SaveStatePreview& preview = item.saveStates[newIndex];
+		mScreenshot->setImage(preview.screenshotPath);
+		mSaveStateLabel->setText(preview.label);
+		mSaveStateLabel->setVisible(true);
+
+		// Cache label background dimensions
+		float padding = mScreenHeight * 0.015f;
+		auto font = mSaveStateLabel->getFont();
+		float textWidth = font->sizeText(mSaveStateLabel->getText()).x();
+		float textHeight = font->getHeight();
+		mSaveStateLabelBgW = textWidth + (padding * 2);
+		mSaveStateLabelBgH = textHeight + (padding * 2);
+		mSaveStateLabelBgY = mSaveStateLabel->getPosition().y() + (mSaveStateLabel->getSize().y() - mSaveStateLabelBgH) / 2.0f;
+	}
 }
 
 void GuiGameSwitcher::launchCurrentGame()
@@ -1357,6 +1592,15 @@ void GuiGameSwitcher::launchCurrentGame()
 		// Normal mode - use FileData
 		FileData* game = item.game;
 
+		// Build launch options with selected save state (if any)
+		LaunchGameOptions options;
+		if (item.currentSaveStateIndex >= 0 &&
+		    item.currentSaveStateIndex < (int)item.saveStates.size() &&
+		    item.saveStates[item.currentSaveStateIndex].saveState != nullptr)
+		{
+			options.saveStateInfo = item.saveStates[item.currentSaveStateIndex].saveState;
+		}
+
 		// Set cursor in game list view (like screensaver does)
 		auto view = ViewController::get()->getGameListView(game->getSystem(), false);
 		if (view != nullptr)
@@ -1366,7 +1610,7 @@ void GuiGameSwitcher::launchCurrentGame()
 		delete this;
 
 		// Launch the game
-		game->launchGame(window);
+		game->launchGame(window, options);
 	}
 }
 
@@ -1408,7 +1652,8 @@ bool GuiGameSwitcher::input(InputConfig* config, Input input)
 			bool launchAnimEnabled = mCachedLaunchAnimEnabled;
 			bool hasMarquee = mMarquee && mMarquee->isVisible() && mMarquee->hasImage();
 			bool hasPlayInfo = mPlayInfo && mPlayInfo->isVisible();
-			if (launchAnimEnabled && (hasMarquee || hasPlayInfo))
+			bool hasSaveStateLabel = mSaveStateLabel && mSaveStateLabel->isVisible();
+			if (launchAnimEnabled && (hasMarquee || hasPlayInfo || hasSaveStateLabel))
 			{
 				mLaunching = true;
 				mAnimating = true;
@@ -1450,6 +1695,47 @@ bool GuiGameSwitcher::input(InputConfig* config, Input input)
 	if (config->isMappedLike("right", input))
 	{
 		navigateTo(mCurrentIndex + 1);
+		return true;
+	}
+
+	// Up - previous save state
+	if (config->isMappedLike("up", input))
+	{
+		if (!mGames.empty() && !mAnimating)
+		{
+			GameItem& item = mGames[mCurrentIndex];
+			if (!item.saveStates.empty())
+			{
+				int idx = item.currentSaveStateIndex;
+				// Cycle backward: -1 → last, last → last-1, ... 0 → -1
+				if (idx == -1)
+					idx = (int)item.saveStates.size() - 1;
+				else
+					idx--;
+				navigateToSaveState(idx);
+				updateHelpPrompts();
+			}
+		}
+		return true;
+	}
+
+	// Down - next save state
+	if (config->isMappedLike("down", input))
+	{
+		if (!mGames.empty() && !mAnimating)
+		{
+			GameItem& item = mGames[mCurrentIndex];
+			if (!item.saveStates.empty())
+			{
+				int idx = item.currentSaveStateIndex;
+				// Cycle forward: -1 → 0 → 1 → ... → last → -1
+				idx++;
+				if (idx >= (int)item.saveStates.size())
+					idx = -1;
+				navigateToSaveState(idx);
+				updateHelpPrompts();
+			}
+		}
 		return true;
 	}
 
@@ -1675,6 +1961,21 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 			mPrevGameName->render(prevTransform);
 		}
 
+		// Draw previous save state label with background (fading out)
+		if (mPrevSaveStateLabel && mPrevSaveStateLabel->isVisible())
+		{
+			float ssBgX = (screenWidth - mPrevSaveStateLabelBgW) / 2.0f + prevOffset;
+
+			unsigned char fadedSsBgAlpha = (unsigned char)(mCachedBgAlpha * prevOpacityFactor);
+			unsigned int fadedSsBgColor = 0x00000000 | fadedSsBgAlpha;
+
+			Renderer::setMatrix(Transform4x4f::Identity());
+			Renderer::drawRect(ssBgX, mPrevSaveStateLabelBgY, mPrevSaveStateLabelBgW, mPrevSaveStateLabelBgH, fadedSsBgColor, fadedSsBgColor);
+
+			mPrevSaveStateLabel->setOpacity(prevOpacity);
+			mPrevSaveStateLabel->render(prevTransform);
+		}
+
 		// Draw previous play info with background (both fading out)
 		if (mPrevPlayInfo && mPrevPlayInfo->isVisible())
 		{
@@ -1718,6 +2019,21 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 	{
 		mGameName->setOpacity(currOpacity);
 		mGameName->render(currTransform);
+	}
+
+	// Draw current save state label with background
+	if (mSaveStateLabel && mSaveStateLabel->isVisible())
+	{
+		float ssBgX = (screenWidth - mSaveStateLabelBgW) / 2.0f + currOffset;
+
+		unsigned char fadedCurrSsBgAlpha = (unsigned char)(mCachedBgAlpha * currOpacityFactor);
+		unsigned int fadedCurrSsBgColor = 0x00000000 | fadedCurrSsBgAlpha;
+
+		Renderer::setMatrix(Transform4x4f::Identity());
+		Renderer::drawRect(ssBgX, mSaveStateLabelBgY, mSaveStateLabelBgW, mSaveStateLabelBgH, fadedCurrSsBgColor, fadedCurrSsBgColor);
+
+		mSaveStateLabel->setOpacity(currOpacity);
+		mSaveStateLabel->render(currTransform);
 	}
 
 	// Draw current play info with background (both fading in when animating)
@@ -1768,7 +2084,13 @@ std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
 	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH | PIN")));
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 	prompts.push_back(HelpPrompt("left/right", _("NAVIGATE")));
-	
+
+	if (!mGames.empty() && mCurrentIndex >= 0 && mCurrentIndex < (int)mGames.size()
+	    && !mGames[mCurrentIndex].saveStates.empty())
+	{
+		prompts.push_back(HelpPrompt("up/down", _("SAVES")));
+	}
+
 	return prompts;
 }
 

@@ -8,6 +8,15 @@
 #include <set>
 
 class FileData;
+struct SaveState;
+
+struct SaveStatePreview
+{
+	std::string screenshotPath;
+	std::string label;       // "AUTO SAVE - Jan 15 2026" or "SLOT 2 - Jan 10 2026"
+	int slot;                // -1 = auto-save, >= 0 = numbered
+	SaveState* saveState;    // Non-null in normal mode, nullptr in cached mode
+};
 
 class GuiGameSwitcher : public GuiComponent
 {
@@ -75,6 +84,10 @@ private:
 		int playCount;
 		int gameTime;
 		bool included;
+
+		// Save state preview data
+		std::vector<SaveStatePreview> saveStates;
+		int currentSaveStateIndex;  // -1 = default view (no specific save state selected)
 	};
 
 	std::vector<GameItem> mGames;
@@ -86,6 +99,10 @@ private:
 	ImageComponent* mMarquee;
 	TextComponent*  mGameName;      // Fallback when no marquee
 	TextComponent*  mPlayInfo;      // "Played X times | Play time: Xh Xm"
+
+	// Save state label (shown when browsing save states with up/down)
+	TextComponent*  mSaveStateLabel;
+	TextComponent*  mPrevSaveStateLabel;
 
 	// Included indicator (star)
 	TextComponent*  mIncludedIndicator;
@@ -113,6 +130,7 @@ private:
 	                                 TextComponent* gameName, TextComponent* playInfo,
 	                                 int gameIndex);
 	void navigateTo(int index);
+	void navigateToSaveState(int newIndex);
 	void launchCurrentGame();
 	void removeCurrentGame();
 	void toggleCurrentGameInclusion();
@@ -145,6 +163,14 @@ private:
 	float mPrevPlayInfoBgW;
 	float mPrevPlayInfoBgH;
 	float mPrevPlayInfoBgY;
+
+	// Cached save state label background dimensions
+	float mSaveStateLabelBgW;
+	float mSaveStateLabelBgH;
+	float mSaveStateLabelBgY;
+	float mPrevSaveStateLabelBgW;
+	float mPrevSaveStateLabelBgH;
+	float mPrevSaveStateLabelBgY;
 
 	// Cached exclusion list (avoid repeated file I/O in isExcluded())
 	static std::set<std::string> sCachedExclusions;
