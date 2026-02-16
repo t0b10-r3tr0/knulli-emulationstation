@@ -612,13 +612,14 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 			regularGames.push_back(game);
 	}
 
-	// Take all included games + fill remaining slots with regular games
-	int regularSlots = std::max(0, maxGames - (int)includedGames.size());
+	// Cap included games at maxGames, then fill remaining slots with regular games
+	int includedCount = std::min(maxGames, (int)includedGames.size());
+	int regularSlots = std::max(0, maxGames - includedCount);
 	int regularCount = std::min(regularSlots, (int)regularGames.size());
 
 	std::vector<FileData*> finalGames;
-	finalGames.reserve(includedGames.size() + regularCount);
-	finalGames.insert(finalGames.end(), includedGames.begin(), includedGames.end());
+	finalGames.reserve(includedCount + regularCount);
+	finalGames.insert(finalGames.end(), includedGames.begin(), includedGames.begin() + includedCount);
 	finalGames.insert(finalGames.end(), regularGames.begin(), regularGames.begin() + regularCount);
 
 	std::sort(finalGames.begin(), finalGames.end(), [](FileData* a, FileData* b) {
@@ -870,9 +871,9 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 		HelpStyle helpStyle = getHelpStyle();
 		float helpBarY = helpStyle.position.y();
 
-		// Account for the help background padding above the text
+		// Symmetric padding: top padding equals distance from text bottom to screen bottom
 		float helpContentH = helpStyle.font ? Math::round(helpStyle.font->getLetterHeight() * 1.25f) : mScreenHeight * 0.03f;
-		float helpBgPadding = helpContentH * 0.4f;
+		float helpBgPadding = mScreenHeight - helpBarY - helpContentH;
 		float gap = mScreenHeight * 0.015f;
 		playInfoY = helpBarY - helpBgPadding - gap - playInfoHeight;
 	}
@@ -971,8 +972,9 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 		if (style.font)
 		{
 			float helpHeight = Math::round(style.font->getLetterHeight() * 1.25f);
-			float padding = helpHeight * 0.4f;
-			mHelpBgY = style.position.y() - padding;
+			// Symmetric padding: top padding equals distance from text bottom to screen bottom
+			float bottomPadding = mScreenHeight - style.position.y() - helpHeight;
+			mHelpBgY = style.position.y() - bottomPadding;
 			mHelpBgHeight = mScreenHeight - mHelpBgY;
 		}
 	}
@@ -1052,14 +1054,15 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 			regularGames.push_back(game);
 	}
 
-	// Take all included games + fill remaining slots with regular games
-	int regularSlots = std::max(0, maxGames - (int)includedGames.size());
+	// Cap included games at maxGames, then fill remaining slots with regular games
+	int includedCount = std::min(maxGames, (int)includedGames.size());
+	int regularSlots = std::max(0, maxGames - includedCount);
 	int regularCount = std::min(regularSlots, (int)regularGames.size());
 
 	// Merge into a single list, then re-sort by last played
 	std::vector<FileData*> finalGames;
-	finalGames.reserve(includedGames.size() + regularCount);
-	finalGames.insert(finalGames.end(), includedGames.begin(), includedGames.end());
+	finalGames.reserve(includedCount + regularCount);
+	finalGames.insert(finalGames.end(), includedGames.begin(), includedGames.begin() + includedCount);
 	finalGames.insert(finalGames.end(), regularGames.begin(), regularGames.begin() + regularCount);
 
 	std::sort(finalGames.begin(), finalGames.end(), [](FileData* a, FileData* b) {
