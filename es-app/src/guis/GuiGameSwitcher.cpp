@@ -1756,8 +1756,8 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 }
 
 std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
-std::vector<HelpPrompt> prompts;
 {
+	std::vector<HelpPrompt> prompts;
 
 	// Hide help prompts if disabled in settings
 	if (!mCachedHelpEnabled)
