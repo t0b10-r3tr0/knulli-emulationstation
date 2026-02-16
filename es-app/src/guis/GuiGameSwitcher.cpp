@@ -1763,11 +1763,12 @@ std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
 	if (!mCachedHelpEnabled)
 		return prompts;
 
-	prompts.push_back(HelpPrompt("left/right", _("NAVIGATE")));
-	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCHY / PIN (HOLD)")));
-	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
-	prompts.push_back(HelpPrompt("y", _("RANDOM")));
 	prompts.push_back(HelpPrompt("x", _("REMOVE (HOLD)")));
+	prompts.push_back(HelpPrompt("y", _("RANDOM")));
+	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH PIN (HOLD)")));
+	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
+	prompts.push_back(HelpPrompt("left/right", _("NAVIGATE")));
+	
 	return prompts;
 }
 
