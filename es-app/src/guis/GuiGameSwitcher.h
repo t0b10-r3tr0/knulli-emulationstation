@@ -43,6 +43,15 @@ public:
 	static void clearExclusions();
 	static bool isExcluded(const std::string& gamePath);
 
+	// Inclusion list management
+	static std::string getInclusionPath();
+	static std::vector<std::string> loadInclusions();
+	static void saveInclusions(const std::vector<std::string>& inclusions);
+	static void addInclusion(const std::string& gamePath);
+	static void removeInclusion(const std::string& gamePath);
+	static void clearInclusions();
+	static bool isIncluded(const std::string& gamePath);
+
 	// Pending stats for games launched without full ES (Quick Resume / cached mode)
 	static void savePendingStats(const std::string& gamePath, const std::string& systemName, int elapsedSeconds);
 	static void applyPendingStats();  // Called when ES fully loads
@@ -65,6 +74,7 @@ private:
 		std::string systemName;
 		int playCount;
 		int gameTime;
+		bool included;
 	};
 
 	std::vector<GameItem> mGames;
@@ -76,6 +86,10 @@ private:
 	ImageComponent* mMarquee;
 	TextComponent*  mGameName;      // Fallback when no marquee
 	TextComponent*  mPlayInfo;      // "Played X times | Play time: Xh Xm"
+
+	// Included indicator (star)
+	TextComponent*  mIncludedIndicator;
+	TextComponent*  mPrevIncludedIndicator;
 
 	// Previous visual components (for animation)
 	ImageComponent* mPrevScreenshot;
@@ -101,9 +115,11 @@ private:
 	void navigateTo(int index);
 	void launchCurrentGame();
 	void removeCurrentGame();
+	void toggleCurrentGameInclusion();
 
 	MultiStateInput mXButton;
 	MultiStateInput mYButton;
+	MultiStateInput mAButton;
 
 	// Cached screen dimensions (avoid per-frame Renderer calls)
 	float mScreenWidth;
@@ -133,6 +149,10 @@ private:
 	// Cached exclusion list (avoid repeated file I/O in isExcluded())
 	static std::set<std::string> sCachedExclusions;
 	static bool sExclusionsLoaded;
+
+	// Cached inclusion list (avoid repeated file I/O in isIncluded())
+	static std::set<std::string> sCachedInclusions;
+	static bool sInclusionsLoaded;
 
 	static bool sPendingGameSwitcher;
 	static GuiGameSwitcher* sActiveInstance;

@@ -39,6 +39,8 @@ bool GuiGameSwitcher::sPendingGameSwitcher = false;
 GuiGameSwitcher* GuiGameSwitcher::sActiveInstance = nullptr;
 std::set<std::string> GuiGameSwitcher::sCachedExclusions;
 bool GuiGameSwitcher::sExclusionsLoaded = false;
+std::set<std::string> GuiGameSwitcher::sCachedInclusions;
+bool GuiGameSwitcher::sInclusionsLoaded = false;
 
 void GuiGameSwitcher::setPendingGameSwitcher(bool pending)
 {
@@ -209,6 +211,125 @@ bool GuiGameSwitcher::isExcluded(const std::string& gamePath)
 		sExclusionsLoaded = true;
 	}
 	return sCachedExclusions.find(gamePath) != sCachedExclusions.end();
+}
+
+std::string GuiGameSwitcher::getInclusionPath()
+{
+	return Paths::getUserEmulationStationPath() + "/gameswitcher_included.json";
+}
+
+std::vector<std::string> GuiGameSwitcher::loadInclusions()
+{
+	std::vector<std::string> inclusions;
+	std::string path = getInclusionPath();
+
+	if (!Utils::FileSystem::exists(path))
+		return inclusions;
+
+	std::ifstream file(path);
+	if (!file.is_open())
+		return inclusions;
+
+	std::string content((std::istreambuf_iterator<char>(file)),
+	                     std::istreambuf_iterator<char>());
+	file.close();
+
+	rapidjson::Document doc;
+	doc.Parse(content.c_str());
+
+	if (doc.HasParseError() || !doc.IsArray())
+		return inclusions;
+
+	for (auto& val : doc.GetArray())
+	{
+		if (val.IsString())
+			inclusions.push_back(val.GetString());
+	}
+
+	return inclusions;
+}
+
+void GuiGameSwitcher::saveInclusions(const std::vector<std::string>& inclusions)
+{
+	rapidjson::Document doc;
+	doc.SetArray();
+	auto& allocator = doc.GetAllocator();
+
+	for (const auto& path : inclusions)
+		doc.PushBack(rapidjson::Value(path.c_str(), allocator), allocator);
+
+	rapidjson::StringBuffer buffer;
+	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+	doc.Accept(writer);
+
+	std::ofstream file(getInclusionPath());
+	if (file.is_open())
+	{
+		file << buffer.GetString();
+		file.close();
+	}
+}
+
+void GuiGameSwitcher::addInclusion(const std::string& gamePath)
+{
+	if (!sInclusionsLoaded)
+	{
+		auto inclusions = loadInclusions();
+		sCachedInclusions.insert(inclusions.begin(), inclusions.end());
+		sInclusionsLoaded = true;
+	}
+
+	if (sCachedInclusions.find(gamePath) != sCachedInclusions.end())
+		return;
+
+	sCachedInclusions.insert(gamePath);
+	std::vector<std::string> inclusions(sCachedInclusions.begin(), sCachedInclusions.end());
+	saveInclusions(inclusions);
+
+	LOG(LogDebug) << "GuiGameSwitcher: Included game: " << gamePath;
+}
+
+void GuiGameSwitcher::removeInclusion(const std::string& gamePath)
+{
+	if (!sInclusionsLoaded)
+	{
+		auto inclusions = loadInclusions();
+		sCachedInclusions.insert(inclusions.begin(), inclusions.end());
+		sInclusionsLoaded = true;
+	}
+
+	if (sCachedInclusions.find(gamePath) == sCachedInclusions.end())
+		return;
+
+	sCachedInclusions.erase(gamePath);
+	std::vector<std::string> inclusions(sCachedInclusions.begin(), sCachedInclusions.end());
+	saveInclusions(inclusions);
+
+	LOG(LogDebug) << "GuiGameSwitcher: Removed inclusion for game: " << gamePath;
+}
+
+void GuiGameSwitcher::clearInclusions()
+{
+	std::string path = getInclusionPath();
+	if (Utils::FileSystem::exists(path))
+	{
+		Utils::FileSystem::removeFile(path);
+		LOG(LogDebug) << "GuiGameSwitcher: Cleared all inclusions";
+	}
+
+	sCachedInclusions.clear();
+	sInclusionsLoaded = false;
+}
+
+bool GuiGameSwitcher::isIncluded(const std::string& gamePath)
+{
+	if (!sInclusionsLoaded)
+	{
+		auto inclusions = loadInclusions();
+		sCachedInclusions.insert(inclusions.begin(), inclusions.end());
+		sInclusionsLoaded = true;
+	}
+	return sCachedInclusions.find(gamePath) != sCachedInclusions.end();
 }
 
 void GuiGameSwitcher::savePendingStats(const std::string& gamePath, const std::string& systemName, int elapsedSeconds)
@@ -481,15 +602,36 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 		allPlayedGames.insert(allPlayedGames.begin(), gameBeingLaunched);
 	}
 
+	// Partition into included and regular games (both retain last-played sort order)
+	std::vector<FileData*> includedGames, regularGames;
+	for (auto game : allPlayedGames)
+	{
+		if (isIncluded(game->getFullPath()))
+			includedGames.push_back(game);
+		else
+			regularGames.push_back(game);
+	}
+
+	// Take all included games + fill remaining slots with regular games
+	int regularSlots = std::max(0, maxGames - (int)includedGames.size());
+	int regularCount = std::min(regularSlots, (int)regularGames.size());
+
+	std::vector<FileData*> finalGames;
+	finalGames.reserve(includedGames.size() + regularCount);
+	finalGames.insert(finalGames.end(), includedGames.begin(), includedGames.end());
+	finalGames.insert(finalGames.end(), regularGames.begin(), regularGames.begin() + regularCount);
+
+	std::sort(finalGames.begin(), finalGames.end(), [](FileData* a, FileData* b) {
+		return a->getMetadata().get(MetaDataId::LastPlayed) > b->getMetadata().get(MetaDataId::LastPlayed);
+	});
+
 	// Build JSON document
 	rapidjson::Document doc;
 	doc.SetArray();
 	auto& allocator = doc.GetAllocator();
 
-	int count = std::min(maxGames, (int)allPlayedGames.size());
-	for (int i = 0; i < count; i++)
+	for (auto game : finalGames)
 	{
-		FileData* game = allPlayedGames[i];
 
 		rapidjson::Value gameObj(rapidjson::kObjectType);
 
@@ -526,6 +668,10 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 		// Game time
 		gameObj.AddMember("gameTime", game->getMetadata().getInt(MetaDataId::GameTime), allocator);
 
+		// Included flag
+		if (isIncluded(game->getFullPath()))
+			gameObj.AddMember("included", true, allocator);
+
 		doc.PushBack(gameObj, allocator);
 	}
 
@@ -539,7 +685,7 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 	{
 		file << buffer.GetString();
 		file.close();
-		LOG(LogDebug) << "GuiGameSwitcher: Saved cache with " << count << " games";
+		LOG(LogDebug) << "GuiGameSwitcher: Saved cache with " << finalGames.size() << " games";
 	}
 	else
 	{
@@ -610,6 +756,10 @@ void GuiGameSwitcher::loadFromCache()
 		if (gameObj.HasMember("gameTime") && gameObj["gameTime"].IsInt())
 			item.gameTime = gameObj["gameTime"].GetInt();
 
+		item.included = false;
+		if (gameObj.HasMember("included") && gameObj["included"].IsBool())
+			item.included = gameObj["included"].GetBool();
+
 		if (!isExcluded(item.gamePath))
 			mGames.push_back(item);
 	}
@@ -618,7 +768,7 @@ void GuiGameSwitcher::loadFromCache()
 }
 
 GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(window),
-	mXButton("x"), mYButton("y")
+	mXButton("x"), mYButton("y"), mAButton(BUTTON_OK)
 {
 	sActiveInstance = this;
 	mCachedMode = fromCache;
@@ -628,6 +778,8 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mMarquee = nullptr;
 	mGameName = nullptr;
 	mPlayInfo = nullptr;
+	mIncludedIndicator = nullptr;
+	mPrevIncludedIndicator = nullptr;
 	mPrevScreenshot = nullptr;
 	mPrevMarquee = nullptr;
 	mPrevGameName = nullptr;
@@ -773,6 +925,33 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mPrevPlayInfo->setGlowSize(2);
 	mPrevPlayInfo->setFont(infoFont);
 
+	// Create included indicator (star) — top-right corner
+	float starFontSize = mScreenHeight / 20.0f;
+	auto starFont = Font::get((int)starFontSize, fontPath);
+	float starMargin = mScreenWidth * 0.02f;
+
+	mIncludedIndicator = new TextComponent(mWindow);
+	mIncludedIndicator->setText("\u2605");  // ★
+	mIncludedIndicator->setFont(starFont);
+	mIncludedIndicator->setColor(0xFFFFFFFF);
+	mIncludedIndicator->setGlowColor(0x00000080);
+	mIncludedIndicator->setGlowSize(3);
+	mIncludedIndicator->setHorizontalAlignment(ALIGN_RIGHT);
+	mIncludedIndicator->setPosition(0, starMargin);
+	mIncludedIndicator->setSize(mScreenWidth - starMargin, starFontSize);
+	mIncludedIndicator->setVisible(false);
+
+	mPrevIncludedIndicator = new TextComponent(mWindow);
+	mPrevIncludedIndicator->setText("\u2605");  // ★
+	mPrevIncludedIndicator->setFont(starFont);
+	mPrevIncludedIndicator->setColor(0xFFFFFFFF);
+	mPrevIncludedIndicator->setGlowColor(0x00000080);
+	mPrevIncludedIndicator->setGlowSize(3);
+	mPrevIncludedIndicator->setHorizontalAlignment(ALIGN_RIGHT);
+	mPrevIncludedIndicator->setPosition(0, starMargin);
+	mPrevIncludedIndicator->setSize(mScreenWidth - starMargin, starFontSize);
+	mPrevIncludedIndicator->setVisible(false);
+
 	// Cache settings used per-frame in render() and per-navigation in updateDisplayForComponents()
 	int bgOpacityPct = Settings::getInstance()->getInt("GameSwitcherInfoBackgroundOpacity");
 	mCachedBgAlpha = (unsigned char)((bgOpacityPct / 100.0f) * 255.0f);
@@ -814,6 +993,10 @@ GuiGameSwitcher::~GuiGameSwitcher()
 		delete mGameName;
 	if (mPlayInfo != nullptr)
 		delete mPlayInfo;
+	if (mIncludedIndicator != nullptr)
+		delete mIncludedIndicator;
+	if (mPrevIncludedIndicator != nullptr)
+		delete mPrevIncludedIndicator;
 	if (mPrevScreenshot != nullptr)
 		delete mPrevScreenshot;
 	if (mPrevMarquee != nullptr)
@@ -859,16 +1042,40 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 		return a->getMetadata().get(MetaDataId::LastPlayed) > b->getMetadata().get(MetaDataId::LastPlayed);
 	});
 
-	// Take top N games and build the items list
-	int count = std::min(maxGames, (int)allPlayedGames.size());
-	mGames.reserve(count);
-	for (int i = 0; i < count; i++)
+	// Partition into included and regular games (both retain last-played sort order)
+	std::vector<FileData*> includedGames, regularGames;
+	for (auto game : allPlayedGames)
+	{
+		if (isIncluded(game->getFullPath()))
+			includedGames.push_back(game);
+		else
+			regularGames.push_back(game);
+	}
+
+	// Take all included games + fill remaining slots with regular games
+	int regularSlots = std::max(0, maxGames - (int)includedGames.size());
+	int regularCount = std::min(regularSlots, (int)regularGames.size());
+
+	// Merge into a single list, then re-sort by last played
+	std::vector<FileData*> finalGames;
+	finalGames.reserve(includedGames.size() + regularCount);
+	finalGames.insert(finalGames.end(), includedGames.begin(), includedGames.end());
+	finalGames.insert(finalGames.end(), regularGames.begin(), regularGames.begin() + regularCount);
+
+	std::sort(finalGames.begin(), finalGames.end(), [](FileData* a, FileData* b) {
+		return a->getMetadata().get(MetaDataId::LastPlayed) > b->getMetadata().get(MetaDataId::LastPlayed);
+	});
+
+	// Build the items list
+	mGames.reserve(finalGames.size());
+	for (auto game : finalGames)
 	{
 		GameItem item;
-		item.game = allPlayedGames[i];
-		item.screenshotPath = getScreenshotForGame(allPlayedGames[i]);
+		item.game = game;
+		item.screenshotPath = getScreenshotForGame(game);
 		item.playCount = 0;
 		item.gameTime = 0;
+		item.included = isIncluded(game->getFullPath());
 		mGames.push_back(item);
 	}
 
@@ -1042,6 +1249,11 @@ void GuiGameSwitcher::updateDisplayForComponents(ImageComponent* screenshot, Ima
 			mPrevPlayInfoBgY = bgY;
 		}
 	}
+
+	// Update included indicator (star)
+	TextComponent* indicator = (playInfo == mPlayInfo) ? mIncludedIndicator : mPrevIncludedIndicator;
+	if (indicator != nullptr)
+		indicator->setVisible(item.included);
 }
 
 void GuiGameSwitcher::updateDisplay()
@@ -1185,6 +1397,32 @@ bool GuiGameSwitcher::input(InputConfig* config, Input input)
 	if (config->isMappedTo("y", input))
 		return true;  // Consume Y press/release events
 
+	// A button - track press/release for long-press pin (must see both events)
+	if (mAButton.isShortPressed(config, input))
+	{
+		// Short press launches game (only if not animating)
+		if (!mAnimating)
+		{
+			bool launchAnimEnabled = mCachedLaunchAnimEnabled;
+			bool hasMarquee = mMarquee && mMarquee->isVisible() && mMarquee->hasImage();
+			bool hasPlayInfo = mPlayInfo && mPlayInfo->isVisible();
+			if (launchAnimEnabled && (hasMarquee || hasPlayInfo))
+			{
+				mLaunching = true;
+				mAnimating = true;
+				mAnimationProgress = 0.0f;
+			}
+			else
+			{
+				launchCurrentGame();
+			}
+		}
+		return true;
+	}
+
+	if (config->isMappedTo(BUTTON_OK, input))
+		return true;  // Consume A press/release events
+
 	if (input.value == 0)
 		return false;
 
@@ -1198,26 +1436,6 @@ bool GuiGameSwitcher::input(InputConfig* config, Input input)
 	// Block all input during launch fade-out
 	if (mLaunching)
 		return true;
-
-	// A button - start fade-out then launch game (only if not animating)
-	if (config->isMappedTo(BUTTON_OK, input) && !mAnimating)
-	{
-		bool launchAnimEnabled = mCachedLaunchAnimEnabled;
-		bool hasMarquee = mMarquee && mMarquee->isVisible() && mMarquee->hasImage();
-		bool hasPlayInfo = mPlayInfo && mPlayInfo->isVisible();
-		if (launchAnimEnabled && (hasMarquee || hasPlayInfo))
-		{
-			// Start fade-out animation (uses first half of navigation animation timing)
-			mLaunching = true;
-			mAnimating = true;
-			mAnimationProgress = 0.0f;
-		}
-		else
-		{
-			launchCurrentGame();
-		}
-		return true;
-	}
 
 	// Left - previous game
 	if (config->isMappedLike("left", input))
@@ -1277,6 +1495,33 @@ void GuiGameSwitcher::removeCurrentGame()
 	updateHelpPrompts();
 }
 
+void GuiGameSwitcher::toggleCurrentGameInclusion()
+{
+	if (mGames.empty() || mAnimating)
+		return;
+
+	std::string gamePath;
+	if (mGames[mCurrentIndex].game != nullptr)
+		gamePath = mGames[mCurrentIndex].game->getFullPath();
+	else
+		gamePath = mGames[mCurrentIndex].gamePath;
+
+	if (isIncluded(gamePath))
+	{
+		removeInclusion(gamePath);
+		mGames[mCurrentIndex].included = false;
+		mWindow->displayNotificationMessage(_("Unpinned"), 1500);
+	}
+	else
+	{
+		addInclusion(gamePath);
+		mGames[mCurrentIndex].included = true;
+		mWindow->displayNotificationMessage(_("Pinned"), 1500);
+	}
+
+	updateDisplay();
+}
+
 void GuiGameSwitcher::update(int deltaTime)
 {
 	GuiComponent::update(deltaTime);
@@ -1285,6 +1530,12 @@ void GuiGameSwitcher::update(int deltaTime)
 	{
 		removeCurrentGame();
 		return;  // this may be deleted if no games left
+	}
+
+	if (mAButton.isLongPressed(deltaTime))
+	{
+		toggleCurrentGameInclusion();
+		return;
 	}
 
 	if (mYButton.isLongPressed(deltaTime))
@@ -1436,6 +1687,13 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 			mPrevPlayInfo->setOpacity(prevOpacity);
 			mPrevPlayInfo->render(prevTransform);
 		}
+
+		// Render previous included indicator (fading out)
+		if (mPrevIncludedIndicator && mPrevIncludedIndicator->isVisible())
+		{
+			mPrevIncludedIndicator->setOpacity(prevOpacity);
+			mPrevIncludedIndicator->render(prevTransform);
+		}
 	}
 
 	// Render current components (sliding in or static)
@@ -1475,6 +1733,13 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 		mPlayInfo->render(currTransform);
 	}
 
+	// Render current included indicator (fading in when animating, full opacity when static)
+	if (mIncludedIndicator && mIncludedIndicator->isVisible())
+	{
+		mIncludedIndicator->setOpacity(currOpacity);
+		mIncludedIndicator->render(currTransform);
+	}
+
 	// Render help prompts early to bypass Window's fullScreenMenus suppression
 	if (mCachedHelpEnabled)
 	{
@@ -1497,7 +1762,7 @@ std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
 		return prompts;
 
 	prompts.push_back(HelpPrompt("left/right", _("NAVIGATE")));
-	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH")));
+	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH / PIN (HOLD)")));
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 	prompts.push_back(HelpPrompt("y", _("RANDOM")));
 	prompts.push_back(HelpPrompt("x", _("REMOVE (HOLD)")));
@@ -1733,6 +1998,14 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 		window->pushGui(new GuiMsgBox(window,
 			_("RESTORE ALL REMOVED GAMES TO GAME SWITCHER?"),
 			_("YES"), [window]() { GuiGameSwitcher::clearExclusions(); },
+			_("NO"), nullptr));
+	});
+
+	s->addEntry(_("CLEAR INCLUDED GAMES"), false, [window]()
+	{
+		window->pushGui(new GuiMsgBox(window,
+			_("REMOVE ALL PINNED GAMES FROM GAME SWITCHER?"),
+			_("YES"), [window]() { GuiGameSwitcher::clearInclusions(); },
 			_("NO"), nullptr));
 	});
 
