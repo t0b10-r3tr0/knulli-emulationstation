@@ -1765,7 +1765,7 @@ std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
 
 	prompts.push_back(HelpPrompt("x", _("REMOVE")));
 	prompts.push_back(HelpPrompt("y", _("RANDOM")));
-	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH|PIN")));
+	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH | PIN")));
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 	prompts.push_back(HelpPrompt("left/right", _("NAVIGATE")));
 	
