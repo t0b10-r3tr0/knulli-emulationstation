@@ -1756,16 +1756,16 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 }
 
 std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
+std::vector<HelpPrompt> prompts;
 {
-	std::vector<HelpPrompt> prompts;
 
 	// Hide help prompts if disabled in settings
 	if (!mCachedHelpEnabled)
 		return prompts;
 
-	prompts.push_back(HelpPrompt("x", _("REMOVE (HOLD)")));
+	prompts.push_back(HelpPrompt("x", _("REMOVE")));
 	prompts.push_back(HelpPrompt("y", _("RANDOM")));
-	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH PIN (HOLD)")));
+	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH|PIN")));
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 	prompts.push_back(HelpPrompt("left/right", _("NAVIGATE")));
 	

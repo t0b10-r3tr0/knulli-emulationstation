@@ -1027,7 +1027,7 @@ void Window::setHelpPrompts(const std::vector<HelpPrompt>& prompts, const HelpSt
 			"up/down/left/right",
 			"up/down",
 			"left/right",
-			BUTTON_OK, "x", "y", "l", "r", BUTTON_BACK,
+			BUTTON_OK, BUTTON_BACK, "x", "y", "l", "r"
 			"start", "select",
 			NULL
 		};
