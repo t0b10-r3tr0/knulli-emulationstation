@@ -1483,7 +1483,7 @@ void GuiGameSwitcher::updateDisplayForComponents(ImageComponent* screenshot, Ima
 		bool hasSaveState = item.currentSaveStateIndex >= 0;
 		ssIndicator->setVisible(hasSaveState);
 		if (hasSaveState)
-			ssIndicator->setText(item.currentSaveStateIndex == 0 ? "\u25C9" : "\u25CE\");  // ◉ for most recent, ◎ for others
+			ssIndicator->setText(item.currentSaveStateIndex == 0 ? "\u25C9" : "\u25C9");  // ◉ for most recent, ◎ for others
 	}
 }
 
