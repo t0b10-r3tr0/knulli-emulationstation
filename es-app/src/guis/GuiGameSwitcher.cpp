@@ -866,6 +866,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mLaunchAfterNavigation = false;
 	mAnimationProgress = 0.0f;
 	mAnimationDirection = 0;
+	mFadeIndicator = false;
 	mScreenWidth = (float)Renderer::getScreenWidth();
 	mScreenHeight = (float)Renderer::getScreenHeight();
 	mCachedBgAlpha = 0;
@@ -1623,10 +1624,10 @@ void GuiGameSwitcher::navigateToSaveState(int newIndex, int direction)
 	}
 
 	// Start vertical animation
-	// Fade-only when navigating between default and first/last save state
-	int lastIndex = (int)item.saveStates.size() - 1;
-	bool fadeOnly = (oldIndex == -1 && (newIndex == 0 || newIndex == lastIndex)) ||
-	                ((oldIndex == 0 || oldIndex == lastIndex) && newIndex == -1);
+	// Fade-only (crossfade, no slide) when navigating between default and first save state
+	bool fadeOnly = (oldIndex == -1 && newIndex == 0) || (oldIndex == 0 && newIndex == -1);
+	// Indicator fades whenever transitioning to/from default view
+	mFadeIndicator = (oldIndex == -1 || newIndex == -1);
 	mAnimating = true;
 	mAnimatingVertical = true;
 	mAnimationProgress = 0.0f;
@@ -2076,8 +2077,8 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 				mPrevSaveStateLabel->render(transform);
 			}
 
-			// Previous save state indicator: fade out during vertical animation
-			if (mPrevSaveStateIndicator && mPrevSaveStateIndicator->isVisible())
+			// Previous save state indicator: fade out only when transitioning to/from default
+			if (mFadeIndicator && mPrevSaveStateIndicator && mPrevSaveStateIndicator->isVisible())
 			{
 				mPrevSaveStateIndicator->setOpacity(prevOpacity);
 				mPrevSaveStateIndicator->render(transform);
@@ -2235,10 +2236,10 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 		mIncludedIndicator->render(overlayTransform);
 	}
 
-	// Render current save state indicator (fades during vertical animation like save state label)
+	// Render current save state indicator (fades only when transitioning to/from default)
 	if (mSaveStateIndicator && mSaveStateIndicator->isVisible())
 	{
-		unsigned char ssIndicatorOpac = isVertAnim ? currOpacity : overlayOpac;
+		unsigned char ssIndicatorOpac = (isVertAnim && mFadeIndicator) ? currOpacity : overlayOpac;
 		mSaveStateIndicator->setOpacity(ssIndicatorOpac);
 		mSaveStateIndicator->render(overlayTransform);
 	}

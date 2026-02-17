@@ -125,6 +125,7 @@ private:
 	bool  mLaunchAfterNavigation; // Launch game after navigation animation completes
 	float mAnimationProgress;    // 0.0 to 1.0
 	int   mAnimationDirection;   // -1 = left/up, +1 = right/down
+	bool  mFadeIndicator;        // True when save state indicator should fade (default ↔ save state)
 	int   mAnimationDuration;    // milliseconds
 
 	void loadRecentlyPlayedGames();
