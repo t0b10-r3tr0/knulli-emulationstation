@@ -1476,10 +1476,15 @@ void GuiGameSwitcher::updateDisplayForComponents(ImageComponent* screenshot, Ima
 	if (indicator != nullptr)
 		indicator->setVisible(item.included);
 
-	// Update save state indicator (◉ — top-left)
+	// Update save state indicator (◉/◎ — top-left)
 	TextComponent* ssIndicator = (playInfo == mPlayInfo) ? mSaveStateIndicator : mPrevSaveStateIndicator;
 	if (ssIndicator != nullptr)
-		ssIndicator->setVisible(item.currentSaveStateIndex >= 0);
+	{
+		bool hasSaveState = item.currentSaveStateIndex >= 0;
+		ssIndicator->setVisible(hasSaveState);
+		if (hasSaveState)
+			ssIndicator->setText(item.currentSaveStateIndex == 0 ? "\u25C9" : "\u25CE\");  // ◉ for most recent, ◎ for others
+	}
 }
 
 void GuiGameSwitcher::updateDisplay()
@@ -1566,6 +1571,20 @@ void GuiGameSwitcher::navigateToSaveState(int newIndex, int direction)
 		mPrevSaveStateLabel->setVisible(false);
 	}
 
+	// Set up previous save state indicator for animation
+	if (mPrevSaveStateIndicator)
+	{
+		if (oldIndex >= 0)
+		{
+			mPrevSaveStateIndicator->setText(oldIndex == 0 ? "\u25C9" : "\u25CB");  // ◉ for most recent, ○ for others
+			mPrevSaveStateIndicator->setVisible(true);
+		}
+		else
+		{
+			mPrevSaveStateIndicator->setVisible(false);
+		}
+	}
+
 	// Update to new save state
 	item.currentSaveStateIndex = newIndex;
 
@@ -1588,7 +1607,10 @@ void GuiGameSwitcher::navigateToSaveState(int newIndex, int direction)
 		mSaveStateLabel->setText(preview.label);
 		mSaveStateLabel->setVisible(true);
 		if (mSaveStateIndicator)
+		{
+			mSaveStateIndicator->setText(newIndex == 0 ? "\u25C9" : "\u25CB");  // ◉ for most recent, ○ for others
 			mSaveStateIndicator->setVisible(true);
+		}
 
 		// Cache label background dimensions
 		float padding = mScreenHeight * 0.015f;
