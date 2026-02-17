@@ -104,6 +104,10 @@ private:
 	TextComponent*  mSaveStateLabel;
 	TextComponent*  mPrevSaveStateLabel;
 
+	// Save state indicator (◉, top-left — shown when viewing a save state)
+	TextComponent*  mSaveStateIndicator;
+	TextComponent*  mPrevSaveStateIndicator;
+
 	// Included indicator (star, top-right — shown when game is pinned)
 	TextComponent*  mIncludedIndicator;
 	TextComponent*  mPrevIncludedIndicator;
