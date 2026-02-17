@@ -1601,8 +1601,8 @@ void GuiGameSwitcher::navigateToSaveState(int newIndex, int direction)
 	}
 
 	// Start vertical animation
-	// Fade-only when navigating down from default to first save state
-	bool fadeOnly = (oldIndex == -1 && newIndex == 0);
+	// Fade-only when navigating between default and first save state
+	bool fadeOnly = (oldIndex == -1 && newIndex == 0) || (oldIndex == 0 && newIndex == -1);
 	mAnimating = true;
 	mAnimatingVertical = true;
 	mAnimationProgress = 0.0f;
