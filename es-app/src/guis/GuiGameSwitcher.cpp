@@ -860,6 +860,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mPrevGameName = nullptr;
 	mPrevPlayInfo = nullptr;
 	mAnimating = false;
+	mAnimatingVertical = false;
 	mLaunching = false;
 	mLaunchAfterNavigation = false;
 	mAnimationProgress = 0.0f;
@@ -972,9 +973,10 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mPlayInfo->setGlowSize(2);
 	mPlayInfo->setFont(infoFont);
 
-	// Create save state label (positioned above play info)
+	// Create save state label (positioned above play info with gap to prevent background overlap)
 	float saveStateLabelHeight = playInfoHeight;
-	float saveStateLabelY = playInfoY - saveStateLabelHeight;
+	float saveStateLabelGap = mScreenHeight * 0.01f;
+	float saveStateLabelY = playInfoY - saveStateLabelHeight - saveStateLabelGap;
 
 	mSaveStateLabel = new TextComponent(mWindow);
 	mSaveStateLabel->setPosition(0, saveStateLabelY);
@@ -1501,12 +1503,42 @@ void GuiGameSwitcher::navigateTo(int index)
 	mAnimationProgress = 0.0f;
 }
 
-void GuiGameSwitcher::navigateToSaveState(int newIndex)
+void GuiGameSwitcher::navigateToSaveState(int newIndex, int direction)
 {
 	if (mGames.empty() || mCurrentIndex < 0 || mCurrentIndex >= (int)mGames.size())
 		return;
 
 	GameItem& item = mGames[mCurrentIndex];
+	int oldIndex = item.currentSaveStateIndex;
+
+	// Set up previous screenshot for animation
+	std::string prevScreenshotPath;
+	if (oldIndex == -1)
+		prevScreenshotPath = item.screenshotPath;
+	else
+		prevScreenshotPath = item.saveStates[oldIndex].screenshotPath;
+	mPrevScreenshot->setImage(prevScreenshotPath);
+
+	// Set up previous save state label for animation
+	if (oldIndex >= 0 && oldIndex < (int)item.saveStates.size())
+	{
+		mPrevSaveStateLabel->setText(item.saveStates[oldIndex].label);
+		mPrevSaveStateLabel->setVisible(true);
+
+		float padding = mScreenHeight * 0.015f;
+		auto font = mPrevSaveStateLabel->getFont();
+		float textWidth = font->sizeText(mPrevSaveStateLabel->getText()).x();
+		float textHeight = font->getHeight();
+		mPrevSaveStateLabelBgW = textWidth + (padding * 2);
+		mPrevSaveStateLabelBgH = textHeight + (padding * 2);
+		mPrevSaveStateLabelBgY = mPrevSaveStateLabel->getPosition().y() + (mPrevSaveStateLabel->getSize().y() - mPrevSaveStateLabelBgH) / 2.0f;
+	}
+	else
+	{
+		mPrevSaveStateLabel->setVisible(false);
+	}
+
+	// Update to new save state
 	item.currentSaveStateIndex = newIndex;
 
 	if (newIndex == -1)
@@ -1535,6 +1567,12 @@ void GuiGameSwitcher::navigateToSaveState(int newIndex)
 		mSaveStateLabelBgH = textHeight + (padding * 2);
 		mSaveStateLabelBgY = mSaveStateLabel->getPosition().y() + (mSaveStateLabel->getSize().y() - mSaveStateLabelBgH) / 2.0f;
 	}
+
+	// Start vertical animation
+	mAnimating = true;
+	mAnimatingVertical = true;
+	mAnimationProgress = 0.0f;
+	mAnimationDirection = direction;
 }
 
 void GuiGameSwitcher::launchCurrentGame()
@@ -1712,7 +1750,7 @@ bool GuiGameSwitcher::input(InputConfig* config, Input input)
 					idx = (int)item.saveStates.size() - 1;
 				else
 					idx--;
-				navigateToSaveState(idx);
+				navigateToSaveState(idx, -1);
 				updateHelpPrompts();
 			}
 		}
@@ -1732,7 +1770,7 @@ bool GuiGameSwitcher::input(InputConfig* config, Input input)
 				idx++;
 				if (idx >= (int)item.saveStates.size())
 					idx = -1;
-				navigateToSaveState(idx);
+				navigateToSaveState(idx, 1);
 				updateHelpPrompts();
 			}
 		}
@@ -1854,6 +1892,7 @@ void GuiGameSwitcher::update(int deltaTime)
 		{
 			mAnimationProgress = 1.0f;
 			mAnimating = false;
+			mAnimatingVertical = false;
 
 			if (mLaunching)
 			{
@@ -1894,6 +1933,7 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 
 	// Calculate animation offset and opacity using smootherstep for acceleration and deceleration
 	float animOffset = 0.0f;
+	float vertAnimOffset = 0.0f;
 	unsigned char currOpacity = 255;
 	unsigned char prevOpacity = 255;
 	float currOpacityFactor = 1.0f;
@@ -1905,7 +1945,7 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 
 		if (mLaunching)
 		{
-			// Launch fade-out: fade current marquee/play info from 255 → 0
+			// Launch fade-out: fade current marquee/play info/label from 255 → 0
 			// Progress already runs at 2x speed so this takes half the animation duration
 			float eased = t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
 			currOpacity = (unsigned char)((1.0f - eased) * 255.0f);
@@ -1915,9 +1955,13 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 		{
 			// Smootherstep: 6t^5 - 15t^4 + 10t^3 (starts slow, speeds up, ends slow)
 			float eased = t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
-			animOffset = eased * screenWidth * mAnimationDirection;
 
-			// Calculate opacity for fade effect on marquee and play info
+			if (mAnimatingVertical)
+				vertAnimOffset = eased * screenHeight * mAnimationDirection;
+			else
+				animOffset = eased * screenWidth * mAnimationDirection;
+
+			// Calculate opacity for fade effect on overlays (marquee, play info, labels)
 			// Fade takes half the time of the slide animation:
 			// - Outgoing: fades out during first half (0.0 - 0.5 progress)
 			// - Incoming: fades in during second half (0.5 - 1.0 progress)
@@ -1941,121 +1985,175 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 	// Render previous components (sliding out) if animating (not during launch fade-out)
 	if (mAnimating && !mLaunching)
 	{
-		float prevOffset = -animOffset;  // Previous slides opposite direction
-
-		Transform4x4f prevTransform = transform;
-		prevTransform.translate(Vector3f(prevOffset, 0, 0));
-
-		if (mPrevScreenshot && mPrevScreenshot->hasImage())
-			mPrevScreenshot->render(prevTransform);
-
-		// Apply fade-out opacity to previous marquee/game name
-		if (mPrevMarquee && mPrevMarquee->isVisible() && mPrevMarquee->hasImage())
+		if (mAnimatingVertical)
 		{
-			mPrevMarquee->setOpacity(prevOpacity);
-			mPrevMarquee->render(prevTransform);
+			// Vertical animation: only previous screenshot and save state label slide
+			float prevVertOff = -vertAnimOffset;
+			Transform4x4f prevVertTransform = transform;
+			prevVertTransform.translate(Vector3f(0, prevVertOff, 0));
+
+			if (mPrevScreenshot && mPrevScreenshot->hasImage())
+				mPrevScreenshot->render(prevVertTransform);
+
+			// Previous save state label with vertical offset and fade
+			if (mPrevSaveStateLabel && mPrevSaveStateLabel->isVisible())
+			{
+				float ssBgX = (screenWidth - mPrevSaveStateLabelBgW) / 2.0f;
+
+				unsigned char fadedSsBgAlpha = (unsigned char)(mCachedBgAlpha * prevOpacityFactor);
+				unsigned int fadedSsBgColor = 0x00000000 | fadedSsBgAlpha;
+
+				Renderer::setMatrix(Transform4x4f::Identity());
+				Renderer::drawRect(ssBgX, mPrevSaveStateLabelBgY + prevVertOff, mPrevSaveStateLabelBgW, mPrevSaveStateLabelBgH, fadedSsBgColor, fadedSsBgColor);
+
+				mPrevSaveStateLabel->setOpacity(prevOpacity);
+				mPrevSaveStateLabel->render(prevVertTransform);
+			}
 		}
-		else if (mPrevGameName && mPrevGameName->isVisible())
+		else
 		{
-			mPrevGameName->setOpacity(prevOpacity);
-			mPrevGameName->render(prevTransform);
-		}
+			// Horizontal animation: all previous components slide
+			float prevOffset = -animOffset;
 
-		// Draw previous save state label with background (fading out)
-		if (mPrevSaveStateLabel && mPrevSaveStateLabel->isVisible())
-		{
-			float ssBgX = (screenWidth - mPrevSaveStateLabelBgW) / 2.0f + prevOffset;
+			Transform4x4f prevTransform = transform;
+			prevTransform.translate(Vector3f(prevOffset, 0, 0));
 
-			unsigned char fadedSsBgAlpha = (unsigned char)(mCachedBgAlpha * prevOpacityFactor);
-			unsigned int fadedSsBgColor = 0x00000000 | fadedSsBgAlpha;
+			if (mPrevScreenshot && mPrevScreenshot->hasImage())
+				mPrevScreenshot->render(prevTransform);
 
-			Renderer::setMatrix(Transform4x4f::Identity());
-			Renderer::drawRect(ssBgX, mPrevSaveStateLabelBgY, mPrevSaveStateLabelBgW, mPrevSaveStateLabelBgH, fadedSsBgColor, fadedSsBgColor);
+			// Apply fade-out opacity to previous marquee/game name
+			if (mPrevMarquee && mPrevMarquee->isVisible() && mPrevMarquee->hasImage())
+			{
+				mPrevMarquee->setOpacity(prevOpacity);
+				mPrevMarquee->render(prevTransform);
+			}
+			else if (mPrevGameName && mPrevGameName->isVisible())
+			{
+				mPrevGameName->setOpacity(prevOpacity);
+				mPrevGameName->render(prevTransform);
+			}
 
-			mPrevSaveStateLabel->setOpacity(prevOpacity);
-			mPrevSaveStateLabel->render(prevTransform);
-		}
+			// Draw previous save state label with background (fading out)
+			if (mPrevSaveStateLabel && mPrevSaveStateLabel->isVisible())
+			{
+				float ssBgX = (screenWidth - mPrevSaveStateLabelBgW) / 2.0f + prevOffset;
 
-		// Draw previous play info with background (both fading out)
-		if (mPrevPlayInfo && mPrevPlayInfo->isVisible())
-		{
-			float bgX = (screenWidth - mPrevPlayInfoBgW) / 2.0f + prevOffset;
+				unsigned char fadedSsBgAlpha = (unsigned char)(mCachedBgAlpha * prevOpacityFactor);
+				unsigned int fadedSsBgColor = 0x00000000 | fadedSsBgAlpha;
 
-			unsigned char fadedBgAlpha = (unsigned char)(mCachedBgAlpha * prevOpacityFactor);
-			unsigned int fadedBgColor = 0x00000000 | fadedBgAlpha;
+				Renderer::setMatrix(Transform4x4f::Identity());
+				Renderer::drawRect(ssBgX, mPrevSaveStateLabelBgY, mPrevSaveStateLabelBgW, mPrevSaveStateLabelBgH, fadedSsBgColor, fadedSsBgColor);
 
-			Renderer::setMatrix(Transform4x4f::Identity());
-			Renderer::drawRect(bgX, mPrevPlayInfoBgY, mPrevPlayInfoBgW, mPrevPlayInfoBgH, fadedBgColor, fadedBgColor);
+				mPrevSaveStateLabel->setOpacity(prevOpacity);
+				mPrevSaveStateLabel->render(prevTransform);
+			}
 
-			mPrevPlayInfo->setOpacity(prevOpacity);
-			mPrevPlayInfo->render(prevTransform);
-		}
+			// Draw previous play info with background (both fading out)
+			if (mPrevPlayInfo && mPrevPlayInfo->isVisible())
+			{
+				float bgX = (screenWidth - mPrevPlayInfoBgW) / 2.0f + prevOffset;
 
-		// Render previous included indicator (fading out)
-		if (mPrevIncludedIndicator && mPrevIncludedIndicator->isVisible())
-		{
-			mPrevIncludedIndicator->setOpacity(prevOpacity);
-			mPrevIncludedIndicator->render(prevTransform);
+				unsigned char fadedBgAlpha = (unsigned char)(mCachedBgAlpha * prevOpacityFactor);
+				unsigned int fadedBgColor = 0x00000000 | fadedBgAlpha;
+
+				Renderer::setMatrix(Transform4x4f::Identity());
+				Renderer::drawRect(bgX, mPrevPlayInfoBgY, mPrevPlayInfoBgW, mPrevPlayInfoBgH, fadedBgColor, fadedBgColor);
+
+				mPrevPlayInfo->setOpacity(prevOpacity);
+				mPrevPlayInfo->render(prevTransform);
+			}
+
+			// Render previous included indicator (fading out)
+			if (mPrevIncludedIndicator && mPrevIncludedIndicator->isVisible())
+			{
+				mPrevIncludedIndicator->setOpacity(prevOpacity);
+				mPrevIncludedIndicator->render(prevTransform);
+			}
 		}
 	}
 
-	// Render current components (sliding in or static)
-	// During launch fade-out, current components stay in place (no horizontal offset)
-	float currOffset = (mAnimating && !mLaunching) ? (screenWidth * mAnimationDirection - animOffset) : 0.0f;
+	// Compute transforms for current components
+	// During vertical animation: screenshot and save state label get vertical offset;
+	//   marquee, play info, indicator stay static
+	// During horizontal animation: everything gets horizontal offset
+	// During launch fade-out: everything stays in place (offset = 0)
+	bool isVertAnim = mAnimating && !mLaunching && mAnimatingVertical;
+	bool isHorizAnim = mAnimating && !mLaunching && !mAnimatingVertical;
 
-	Transform4x4f currTransform = transform;
-	currTransform.translate(Vector3f(currOffset, 0, 0));
+	// Screenshot transform: moves during both horizontal and vertical animation
+	float ssOffsetX = isHorizAnim ? (screenWidth * mAnimationDirection - animOffset) : 0.0f;
+	float ssOffsetY = isVertAnim ? (screenHeight * mAnimationDirection - vertAnimOffset) : 0.0f;
+	Transform4x4f screenshotTransform = transform;
+	screenshotTransform.translate(Vector3f(ssOffsetX, ssOffsetY, 0));
 
+	// Overlay transform: moves during horizontal animation only (static during vertical)
+	float overlayOffsetX = isHorizAnim ? ssOffsetX : 0.0f;
+	Transform4x4f overlayTransform = transform;
+	overlayTransform.translate(Vector3f(overlayOffsetX, 0, 0));
+
+	// Overlay opacity: fades during horizontal animation and launch, static during vertical
+	unsigned char overlayOpac = isVertAnim ? 255 : currOpacity;
+	float overlayOpacFactor = isVertAnim ? 1.0f : currOpacityFactor;
+
+	// Save state label transform: moves during both horizontal and vertical animation
+	Transform4x4f ssLabelTransform = transform;
+	ssLabelTransform.translate(Vector3f(overlayOffsetX, ssOffsetY, 0));
+
+	// Render current screenshot
 	if (mScreenshot && mScreenshot->hasImage())
-		mScreenshot->render(currTransform);
+		mScreenshot->render(screenshotTransform);
 
-	// Apply fade-in opacity to current marquee/game name (full opacity when not animating)
+	// Render current marquee/game name (static during vertical animation)
 	if (mMarquee && mMarquee->isVisible() && mMarquee->hasImage())
 	{
-		mMarquee->setOpacity(currOpacity);
-		mMarquee->render(currTransform);
+		mMarquee->setOpacity(overlayOpac);
+		mMarquee->render(overlayTransform);
 	}
 	else if (mGameName && mGameName->isVisible())
 	{
-		mGameName->setOpacity(currOpacity);
-		mGameName->render(currTransform);
+		mGameName->setOpacity(overlayOpac);
+		mGameName->render(overlayTransform);
 	}
 
 	// Draw current save state label with background
 	if (mSaveStateLabel && mSaveStateLabel->isVisible())
 	{
-		float ssBgX = (screenWidth - mSaveStateLabelBgW) / 2.0f + currOffset;
+		float ssBgX = (screenWidth - mSaveStateLabelBgW) / 2.0f + overlayOffsetX;
 
-		unsigned char fadedCurrSsBgAlpha = (unsigned char)(mCachedBgAlpha * currOpacityFactor);
+		// During vertical animation, use vertical fade; during horizontal/launch, use overlay fade
+		unsigned char ssLabelOpac = isVertAnim ? currOpacity : overlayOpac;
+		float ssLabelOpacFactor = isVertAnim ? currOpacityFactor : overlayOpacFactor;
+
+		unsigned char fadedCurrSsBgAlpha = (unsigned char)(mCachedBgAlpha * ssLabelOpacFactor);
 		unsigned int fadedCurrSsBgColor = 0x00000000 | fadedCurrSsBgAlpha;
 
 		Renderer::setMatrix(Transform4x4f::Identity());
-		Renderer::drawRect(ssBgX, mSaveStateLabelBgY, mSaveStateLabelBgW, mSaveStateLabelBgH, fadedCurrSsBgColor, fadedCurrSsBgColor);
+		Renderer::drawRect(ssBgX, mSaveStateLabelBgY + ssOffsetY, mSaveStateLabelBgW, mSaveStateLabelBgH, fadedCurrSsBgColor, fadedCurrSsBgColor);
 
-		mSaveStateLabel->setOpacity(currOpacity);
-		mSaveStateLabel->render(currTransform);
+		mSaveStateLabel->setOpacity(ssLabelOpac);
+		mSaveStateLabel->render(ssLabelTransform);
 	}
 
-	// Draw current play info with background (both fading in when animating)
+	// Draw current play info with background (static during vertical animation)
 	if (mPlayInfo && mPlayInfo->isVisible())
 	{
-		float bgX = (screenWidth - mPlayInfoBgW) / 2.0f + currOffset;
+		float bgX = (screenWidth - mPlayInfoBgW) / 2.0f + overlayOffsetX;
 
-		unsigned char fadedCurrBgAlpha = (unsigned char)(mCachedBgAlpha * currOpacityFactor);
+		unsigned char fadedCurrBgAlpha = (unsigned char)(mCachedBgAlpha * overlayOpacFactor);
 		unsigned int fadedCurrBgColor = 0x00000000 | fadedCurrBgAlpha;
 
 		Renderer::setMatrix(Transform4x4f::Identity());
 		Renderer::drawRect(bgX, mPlayInfoBgY, mPlayInfoBgW, mPlayInfoBgH, fadedCurrBgColor, fadedCurrBgColor);
 
-		mPlayInfo->setOpacity(currOpacity);
-		mPlayInfo->render(currTransform);
+		mPlayInfo->setOpacity(overlayOpac);
+		mPlayInfo->render(overlayTransform);
 	}
 
-	// Render current included indicator (fading in when animating, full opacity when static)
+	// Render current included indicator (static during vertical animation)
 	if (mIncludedIndicator && mIncludedIndicator->isVisible())
 	{
-		mIncludedIndicator->setOpacity(currOpacity);
-		mIncludedIndicator->render(currTransform);
+		mIncludedIndicator->setOpacity(overlayOpac);
+		mIncludedIndicator->render(overlayTransform);
 	}
 
 	// Render help prompts early to bypass Window's fullScreenMenus suppression

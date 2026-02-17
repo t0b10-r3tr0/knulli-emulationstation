@@ -116,10 +116,11 @@ private:
 
 	// Animation state
 	bool  mAnimating;
+	bool  mAnimatingVertical;    // True = vertical (save state), false = horizontal (game)
 	bool  mLaunching;            // Fade-out before launch
 	bool  mLaunchAfterNavigation; // Launch game after navigation animation completes
 	float mAnimationProgress;    // 0.0 to 1.0
-	int   mAnimationDirection;   // -1 = left, +1 = right
+	int   mAnimationDirection;   // -1 = left/up, +1 = right/down
 	int   mAnimationDuration;    // milliseconds
 
 	void loadRecentlyPlayedGames();
@@ -130,7 +131,7 @@ private:
 	                                 TextComponent* gameName, TextComponent* playInfo,
 	                                 int gameIndex);
 	void navigateTo(int index);
-	void navigateToSaveState(int newIndex);
+	void navigateToSaveState(int newIndex, int direction);
 	void launchCurrentGame();
 	void removeCurrentGame();
 	void toggleCurrentGameInclusion();
