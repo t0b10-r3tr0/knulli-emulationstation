@@ -1066,7 +1066,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 
 	// Create save state indicator (◉) — top-left corner, mirrors the star
 	mSaveStateIndicator = new TextComponent(mWindow);
-	mSaveStateIndicator->setText("\u25C9");  // ◉
+	mSaveStateIndicator->setText("\u2605");  // ★
 	mSaveStateIndicator->setFont(starFont);
 	mSaveStateIndicator->setColor(0xFF0000FF);  // Red
 	mSaveStateIndicator->setGlowColor(0x00000080);
@@ -1077,7 +1077,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mSaveStateIndicator->setVisible(false);
 
 	mPrevSaveStateIndicator = new TextComponent(mWindow);
-	mPrevSaveStateIndicator->setText("\u25C9");  // ◉
+	mPrevSaveStateIndicator->setText("\u2605");  // ★
 	mPrevSaveStateIndicator->setFont(starFont);
 	mPrevSaveStateIndicator->setColor(0xFF0000FF);  // Red
 	mPrevSaveStateIndicator->setGlowColor(0x00000080);
