@@ -1066,7 +1066,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 
 	// Create save state indicator (◉) — top-left corner, mirrors the star
 	mSaveStateIndicator = new TextComponent(mWindow);
-	mSaveStateIndicator->setText("\u2605");  // ★
+	mSaveStateIndicator->setText("\u25C9");  // ◉
 	mSaveStateIndicator->setFont(starFont);
 	mSaveStateIndicator->setColor(0xFF0000FF);  // Red
 	mSaveStateIndicator->setGlowColor(0x00000080);
@@ -1077,7 +1077,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mSaveStateIndicator->setVisible(false);
 
 	mPrevSaveStateIndicator = new TextComponent(mWindow);
-	mPrevSaveStateIndicator->setText("\u2605");  // ★
+	mPrevSaveStateIndicator->setText("\u25C9");  // ◉
 	mPrevSaveStateIndicator->setFont(starFont);
 	mPrevSaveStateIndicator->setColor(0xFF0000FF);  // Red
 	mPrevSaveStateIndicator->setGlowColor(0x00000080);
@@ -1571,20 +1571,24 @@ void GuiGameSwitcher::navigateToSaveState(int newIndex, int direction)
 
 	if (newIndex == -1)
 	{
-		// Default view — show original game screenshot, hide label
+		// Default view — show original game screenshot, hide label and indicator
 		if (!item.screenshotPath.empty())
 			mScreenshot->setImage(item.screenshotPath);
 		else
 			mScreenshot->setImage("");
 		mSaveStateLabel->setVisible(false);
+		if (mSaveStateIndicator)
+			mSaveStateIndicator->setVisible(false);
 	}
 	else
 	{
-		// Show save state screenshot and label
+		// Show save state screenshot, label, and indicator
 		const SaveStatePreview& preview = item.saveStates[newIndex];
 		mScreenshot->setImage(preview.screenshotPath);
 		mSaveStateLabel->setText(preview.label);
 		mSaveStateLabel->setVisible(true);
+		if (mSaveStateIndicator)
+			mSaveStateIndicator->setVisible(true);
 
 		// Cache label background dimensions
 		float padding = mScreenHeight * 0.015f;
