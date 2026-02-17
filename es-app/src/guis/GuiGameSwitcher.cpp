@@ -682,13 +682,12 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 			bool incrementalSS = supportsIncrementalSS && repo->supportsIncrementalSaveStates();
 			auto states = repo->getSaveStates(game);
 
+			// Sort by most recent first (creation date descending)
 			std::sort(states.begin(), states.end(), [&](const SaveState* a, const SaveState* b)
 			{
 				if (a->config != nullptr && b->config != nullptr && !a->config->equals(b->config))
 					return a->config->isActiveConfig(game);
-				if (supportsIncrementalSS && (a->config != nullptr ? a->config->incremental : incrementalSS))
-					return a->creationDate >= b->creationDate;
-				return a->slot < b->slot;
+				return a->creationDate > b->creationDate;
 			});
 
 			rapidjson::Value saveStatesArr(rapidjson::kArrayType);
@@ -1202,16 +1201,12 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 			auto states = repo->getSaveStates(game);
 			bool incrementalSaveStates = supportsIncrementalSaveStates && repo->supportsIncrementalSaveStates();
 
-			// Sort: match GuiSaveState logic — auto-save first, then by slot (or by creationDate if incremental)
+			// Sort by most recent first (creation date descending)
 			std::sort(states.begin(), states.end(), [&](const SaveState* a, const SaveState* b)
 			{
 				if (a->config != nullptr && b->config != nullptr && !a->config->equals(b->config))
 					return a->config->isActiveConfig(game);
-
-				if (supportsIncrementalSaveStates && (a->config != nullptr ? a->config->incremental : incrementalSaveStates))
-					return a->creationDate >= b->creationDate;
-
-				return a->slot < b->slot;
+				return a->creationDate > b->creationDate;
 			});
 
 			for (auto* state : states)
@@ -1245,21 +1240,18 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 
 std::string GuiGameSwitcher::getScreenshotForGame(FileData* game)
 {
-	// Priority 1: Save state screenshot (auto-save first)
+	// Priority 1: Most recent save state screenshot (by creation date)
 	auto* repo = game->getSourceFileData()->getSystem()->getSaveStateRepository();
 	if (repo != nullptr)
 	{
-		// Try auto-save first
-		SaveState* autoSave = repo->getGameAutoSave(game);
-		if (autoSave != nullptr)
-		{
-			std::string screenshot = autoSave->getScreenShot();
-			if (!screenshot.empty() && Utils::FileSystem::exists(screenshot))
-				return screenshot;
-		}
-
-		// Try any save state screenshot
 		auto states = repo->getSaveStates(game);
+
+		// Sort by creation date descending (most recent first)
+		std::sort(states.begin(), states.end(), [](const SaveState* a, const SaveState* b)
+		{
+			return a->creationDate > b->creationDate;
+		});
+
 		for (auto* state : states)
 		{
 			std::string screenshot = state->getScreenShot();
@@ -1630,13 +1622,21 @@ void GuiGameSwitcher::launchCurrentGame()
 		// Normal mode - use FileData
 		FileData* game = item.game;
 
-		// Build launch options with selected save state (if any)
+		// Build launch options with selected save state
+		// At default view (index -1), launch with the most recent save state (saveStates[0])
+		// since that matches the default screenshot shown
 		LaunchGameOptions options;
 		if (item.currentSaveStateIndex >= 0 &&
 		    item.currentSaveStateIndex < (int)item.saveStates.size() &&
 		    item.saveStates[item.currentSaveStateIndex].saveState != nullptr)
 		{
 			options.saveStateInfo = item.saveStates[item.currentSaveStateIndex].saveState;
+		}
+		else if (item.currentSaveStateIndex == -1 &&
+		         !item.saveStates.empty() &&
+		         item.saveStates[0].saveState != nullptr)
+		{
+			options.saveStateInfo = item.saveStates[0].saveState;
 		}
 
 		// Set cursor in game list view (like screensaver does)
