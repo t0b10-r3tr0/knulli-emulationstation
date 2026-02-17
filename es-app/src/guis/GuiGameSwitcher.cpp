@@ -1623,8 +1623,10 @@ void GuiGameSwitcher::navigateToSaveState(int newIndex, int direction)
 	}
 
 	// Start vertical animation
-	// Fade-only when navigating between default and first save state
-	bool fadeOnly = (oldIndex == -1 && newIndex == 0) || (oldIndex == 0 && newIndex == -1);
+	// Fade-only when navigating between default and first/last save state
+	int lastIndex = (int)item.saveStates.size() - 1;
+	bool fadeOnly = (oldIndex == -1 && (newIndex == 0 || newIndex == lastIndex)) ||
+	                ((oldIndex == 0 || oldIndex == lastIndex) && newIndex == -1);
 	mAnimating = true;
 	mAnimatingVertical = true;
 	mAnimationProgress = 0.0f;
@@ -2073,6 +2075,13 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 				mPrevSaveStateLabel->setOpacity(prevOpacity);
 				mPrevSaveStateLabel->render(transform);
 			}
+
+			// Previous save state indicator: fade out during vertical animation
+			if (mPrevSaveStateIndicator && mPrevSaveStateIndicator->isVisible())
+			{
+				mPrevSaveStateIndicator->setOpacity(prevOpacity);
+				mPrevSaveStateIndicator->render(transform);
+			}
 		}
 		else
 		{
@@ -2226,10 +2235,11 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 		mIncludedIndicator->render(overlayTransform);
 	}
 
-	// Render current save state indicator (static during vertical animation)
+	// Render current save state indicator (fades during vertical animation like save state label)
 	if (mSaveStateIndicator && mSaveStateIndicator->isVisible())
 	{
-		mSaveStateIndicator->setOpacity(overlayOpac);
+		unsigned char ssIndicatorOpac = isVertAnim ? currOpacity : overlayOpac;
+		mSaveStateIndicator->setOpacity(ssIndicatorOpac);
 		mSaveStateIndicator->render(overlayTransform);
 	}
 
