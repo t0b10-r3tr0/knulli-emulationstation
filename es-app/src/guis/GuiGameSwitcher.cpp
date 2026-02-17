@@ -852,8 +852,6 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mPlayInfo = nullptr;
 	mSaveStateLabel = nullptr;
 	mPrevSaveStateLabel = nullptr;
-	mSaveStateIndicator = nullptr;
-	mPrevSaveStateIndicator = nullptr;
 	mIncludedIndicator = nullptr;
 	mPrevIncludedIndicator = nullptr;
 	mPrevScreenshot = nullptr;
@@ -946,6 +944,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	// Move up when help prompts are visible to avoid overlap with help bar
 	float playInfoHeight = mScreenHeight * 0.08f;
 	float playInfoY;
+	float helpBgPadding = 0.0f;
 
 	bool helpEnabled = Settings::getInstance()->getBool("GameSwitcherHelpEnabled");
 	if (helpEnabled)
@@ -955,7 +954,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 
 		// Symmetric padding: top padding equals distance from text bottom to screen bottom
 		float helpContentH = helpStyle.font ? Math::round(helpStyle.font->getLetterHeight() * 1.25f) : mScreenHeight * 0.03f;
-		float helpBgPadding = mScreenHeight - helpBarY - helpContentH;
+		helpBgPadding = mScreenHeight - helpBarY - helpContentH;
 		// Gap between play info background and help background equals the help bar's bottom padding
 		playInfoY = helpBarY - helpBgPadding - helpBgPadding - playInfoHeight;
 	}
@@ -974,9 +973,10 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mPlayInfo->setGlowSize(2);
 	mPlayInfo->setFont(infoFont);
 
-	// Create save state label (positioned above play info with gap to prevent background overlap)
+	// Create save state label (positioned above play info)
+	// Gap between save state bg and play info bg should equal gap between play info bg and help bg
 	float saveStateLabelHeight = playInfoHeight;
-	float saveStateLabelGap = mScreenHeight * 0.01f;
+	float saveStateLabelGap = helpEnabled ? helpBgPadding : mScreenHeight * 0.01f;
 	float saveStateLabelY = playInfoY - saveStateLabelHeight - saveStateLabelGap;
 
 	mSaveStateLabel = new TextComponent(mWindow);
@@ -1062,29 +1062,6 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mPrevIncludedIndicator->setSize(mScreenWidth - starMargin, starFontSize);
 	mPrevIncludedIndicator->setVisible(false);
 
-	// Create save state indicator (disk icon) — top-left corner, mirrors the star
-	mSaveStateIndicator = new TextComponent(mWindow);
-	mSaveStateIndicator->setText("\u25C9");  // ◉
-	mSaveStateIndicator->setFont(starFont);
-	mSaveStateIndicator->setColor(0xFFFFFFFF);
-	mSaveStateIndicator->setGlowColor(0x00000080);
-	mSaveStateIndicator->setGlowSize(3);
-	mSaveStateIndicator->setHorizontalAlignment(ALIGN_LEFT);
-	mSaveStateIndicator->setPosition(starMargin, starMargin);
-	mSaveStateIndicator->setSize(mScreenWidth - starMargin, starFontSize);
-	mSaveStateIndicator->setVisible(false);
-
-	mPrevSaveStateIndicator = new TextComponent(mWindow);
-	mPrevSaveStateIndicator->setText("\u25C9");  // ◉
-	mPrevSaveStateIndicator->setFont(starFont);
-	mPrevSaveStateIndicator->setColor(0xFFFFFFFF);
-	mPrevSaveStateIndicator->setGlowColor(0x00000080);
-	mPrevSaveStateIndicator->setGlowSize(3);
-	mPrevSaveStateIndicator->setHorizontalAlignment(ALIGN_LEFT);
-	mPrevSaveStateIndicator->setPosition(starMargin, starMargin);
-	mPrevSaveStateIndicator->setSize(mScreenWidth - starMargin, starFontSize);
-	mPrevSaveStateIndicator->setVisible(false);
-
 	// Cache settings used per-frame in render() and per-navigation in updateDisplayForComponents()
 	int bgOpacityPct = Settings::getInstance()->getInt("GameSwitcherInfoBackgroundOpacity");
 	mCachedBgAlpha = (unsigned char)((bgOpacityPct / 100.0f) * 255.0f);
@@ -1131,10 +1108,6 @@ GuiGameSwitcher::~GuiGameSwitcher()
 		delete mSaveStateLabel;
 	if (mPrevSaveStateLabel != nullptr)
 		delete mPrevSaveStateLabel;
-	if (mSaveStateIndicator != nullptr)
-		delete mSaveStateIndicator;
-	if (mPrevSaveStateIndicator != nullptr)
-		delete mPrevSaveStateIndicator;
 	if (mIncludedIndicator != nullptr)
 		delete mIncludedIndicator;
 	if (mPrevIncludedIndicator != nullptr)
@@ -1474,10 +1447,6 @@ void GuiGameSwitcher::updateDisplayForComponents(ImageComponent* screenshot, Ima
 	if (indicator != nullptr)
 		indicator->setVisible(item.included);
 
-	// Update save state indicator (disk — top-left)
-	TextComponent* ssIndicator = (playInfo == mPlayInfo) ? mSaveStateIndicator : mPrevSaveStateIndicator;
-	if (ssIndicator != nullptr)
-		ssIndicator->setVisible(item.currentSaveStateIndex >= 0);
 }
 
 void GuiGameSwitcher::updateDisplay()
@@ -2029,7 +1998,7 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 			if (mPrevScreenshot && mPrevScreenshot->hasImage())
 				mPrevScreenshot->render(prevVertTransform);
 
-			// Previous save state label with vertical offset and fade
+			// Previous save state label: static position, fade out only
 			if (mPrevSaveStateLabel && mPrevSaveStateLabel->isVisible())
 			{
 				float ssBgX = (screenWidth - mPrevSaveStateLabelBgW) / 2.0f;
@@ -2038,10 +2007,10 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 				unsigned int fadedSsBgColor = 0x00000000 | fadedSsBgAlpha;
 
 				Renderer::setMatrix(Transform4x4f::Identity());
-				Renderer::drawRect(ssBgX, mPrevSaveStateLabelBgY + prevVertOff, mPrevSaveStateLabelBgW, mPrevSaveStateLabelBgH, fadedSsBgColor, fadedSsBgColor);
+				Renderer::drawRect(ssBgX, mPrevSaveStateLabelBgY, mPrevSaveStateLabelBgW, mPrevSaveStateLabelBgH, fadedSsBgColor, fadedSsBgColor);
 
 				mPrevSaveStateLabel->setOpacity(prevOpacity);
-				mPrevSaveStateLabel->render(prevVertTransform);
+				mPrevSaveStateLabel->render(transform);
 			}
 		}
 		else
@@ -2104,12 +2073,6 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 				mPrevIncludedIndicator->render(prevTransform);
 			}
 
-			// Render previous save state indicator (fading out)
-			if (mPrevSaveStateIndicator && mPrevSaveStateIndicator->isVisible())
-			{
-				mPrevSaveStateIndicator->setOpacity(prevOpacity);
-				mPrevSaveStateIndicator->render(prevTransform);
-			}
 		}
 	}
 
@@ -2136,9 +2099,8 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 	unsigned char overlayOpac = isVertAnim ? 255 : currOpacity;
 	float overlayOpacFactor = isVertAnim ? 1.0f : currOpacityFactor;
 
-	// Save state label transform: moves during both horizontal and vertical animation
-	Transform4x4f ssLabelTransform = transform;
-	ssLabelTransform.translate(Vector3f(overlayOffsetX, ssOffsetY, 0));
+	// Save state label transform: static during vertical animation, moves during horizontal
+	Transform4x4f ssLabelTransform = overlayTransform;
 
 	// Render current screenshot
 	if (mScreenshot && mScreenshot->hasImage())
@@ -2169,7 +2131,7 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 		unsigned int fadedCurrSsBgColor = 0x00000000 | fadedCurrSsBgAlpha;
 
 		Renderer::setMatrix(Transform4x4f::Identity());
-		Renderer::drawRect(ssBgX, mSaveStateLabelBgY + ssOffsetY, mSaveStateLabelBgW, mSaveStateLabelBgH, fadedCurrSsBgColor, fadedCurrSsBgColor);
+		Renderer::drawRect(ssBgX, mSaveStateLabelBgY, mSaveStateLabelBgW, mSaveStateLabelBgH, fadedCurrSsBgColor, fadedCurrSsBgColor);
 
 		mSaveStateLabel->setOpacity(ssLabelOpac);
 		mSaveStateLabel->render(ssLabelTransform);
@@ -2195,13 +2157,6 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 	{
 		mIncludedIndicator->setOpacity(overlayOpac);
 		mIncludedIndicator->render(overlayTransform);
-	}
-
-	// Render current save state indicator (static during vertical animation)
-	if (mSaveStateIndicator && mSaveStateIndicator->isVisible())
-	{
-		mSaveStateIndicator->setOpacity(overlayOpac);
-		mSaveStateIndicator->render(overlayTransform);
 	}
 
 	// Render help prompts early to bypass Window's fullScreenMenus suppression
