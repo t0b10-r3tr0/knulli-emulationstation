@@ -43,9 +43,13 @@ void NinePatchComponent::update(int deltaTime)
 
 	if (mAnimateTiming > 0)
 	{
+		int oldTimer = mTimer;
 		mTimer += deltaTime;
 		if (mTimer >= 2 * mAnimateTiming)
 			mTimer = 0;
+
+		if (mTimer != oldTimer)
+			updateColors();
 	}
 }
 
@@ -69,7 +73,7 @@ void NinePatchComponent::updateColors()
 	{
 		float percent = std::abs(mAnimateTiming - mTimer) / mAnimateTiming;
 		e = Renderer::mixColors(e, mAnimateColor, percent);
-		c = Renderer::mixColors(e, mAnimateColor, percent);
+		c = Renderer::mixColors(c, mAnimateColor, percent);
 	}
 
 	const unsigned int edgeColor = Renderer::convertColor(e & 0xFFFFFF00 | (unsigned char)((e & 0xFF) * opacity));
@@ -238,32 +242,8 @@ void NinePatchComponent::render(const Transform4x4f& parentTrans)
 	}
 	else if (mTexture->bind())
 	{
-		if (mAnimateTiming > 0)
-		{
-			float opacity = getOpacity() / 255.0;
-
-			unsigned int e = mEdgeColor;
-			unsigned int c = mCenterColor;
-
-			float percent = std::abs(mAnimateTiming - mTimer) / mAnimateTiming;
-			e = Renderer::mixColors(e, mAnimateColor, percent);
-			c = Renderer::mixColors(c, mAnimateColor, percent);
-
-			const unsigned int edgeColor = Renderer::convertColor(e & 0xFFFFFF00 | (unsigned char)((e & 0xFF) * opacity));
-			const unsigned int centerColor = Renderer::convertColor(c & 0xFFFFFF00 | (unsigned char)((c & 0xFF) * opacity));
-
-			for (int i = 0; i < 6 * 9; i++)
-				mVertices[i].col = edgeColor;
-
-			for (int i = 0; i < 6; i++)
-				mVertices[(4 * 6) + i].col = centerColor;
-		}
-
 		Renderer::setMatrix(trans);
 		Renderer::drawTriangleStrips(&mVertices[0], 6 * 9);
-
-		if (mAnimateTiming > 0)
-			updateColors();
 	}
 
 	renderChildren(trans);
