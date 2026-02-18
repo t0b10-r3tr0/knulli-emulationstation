@@ -1116,7 +1116,7 @@ const std::vector<FileData*> FolderData::getChildrenListToDisplay()
 	{
 		auto compf = sort.comparisonFunction;
 
-		std::sort(ret.begin(), ret.end(), [scoringBoard, compf](const FileData* file1, const FileData* file2) -> bool
+		std::sort(ret.begin(), ret.end(), [&scoringBoard, compf](const FileData* file1, const FileData* file2) -> bool
 		{ 
 			auto s1 = scoringBoard.find((FileData*) file1);
 			auto s2 = scoringBoard.find((FileData*) file2);		
@@ -1132,7 +1132,7 @@ const std::vector<FileData*> FolderData::getChildrenListToDisplay()
 		bool foldersFirst = Settings::ShowFoldersFirst();
 		bool favoritesFirst = getSystem()->getShowFavoritesFirst();
 
-		std::stable_sort(ret.begin(), ret.end(), [sort, foldersFirst, favoritesFirst](const FileData* file1, const FileData* file2) -> bool
+		std::stable_sort(ret.begin(), ret.end(), [&sort, foldersFirst, favoritesFirst](const FileData* file1, const FileData* file2) -> bool
 			{
 				if (favoritesFirst && file1->getFavorite() != file2->getFavorite())
 					return file1->getFavorite();
