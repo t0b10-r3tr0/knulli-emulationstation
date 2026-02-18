@@ -530,6 +530,14 @@ void Window::update(int deltaTime)
 	updateAsyncNotifications(deltaTime);
 	updateNotificationPopups(deltaTime);
 
+	static int sTextureCacheCleanupTimer = 0;
+	sTextureCacheCleanupTimer += deltaTime;
+	if (sTextureCacheCleanupTimer >= 60000)
+	{
+		TextureResource::cleanupTextureResourceCache();
+		sTextureCacheCleanupTimer = 0;
+	}
+
 	AudioManager::update(deltaTime);
 }
 
