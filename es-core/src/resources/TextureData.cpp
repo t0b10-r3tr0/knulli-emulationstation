@@ -281,7 +281,7 @@ bool TextureData::loadFromVideo()
 		cmdline.push_back("--scene-ratio=1");
 		cmdline.push_back("--no-video-title-show");
 
-		const char** vlcArgs = new const char*[cmdline.size()];
+		std::vector<const char*> vlcArgs(cmdline.size());
 
 		for (int i = 0; i < cmdline.size(); i++)
 			vlcArgs[i] = cmdline[i].c_str();
@@ -290,7 +290,7 @@ bool TextureData::loadFromVideo()
 		_checkUpgradedVlcVersion();
 #endif
 
-		vlcInstance = libvlc_new(cmdline.size(), vlcArgs);
+		vlcInstance = libvlc_new(cmdline.size(), vlcArgs.data());
 		if (vlcInstance == nullptr)
 			return false;
 
