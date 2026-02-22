@@ -248,6 +248,7 @@ void Settings::setDefaults()
 	mIntMap["GameSwitcherInfoBackgroundOpacity"] = 75;
 	mBoolMap["GameSwitcherLaunchAnimationEnabled"] = true;
 	mBoolMap["GameSwitcherBootEnabled"] = false;
+	mBoolMap["GameSwitcherSaveStatesEnabled"] = true;
 	mBoolMap["GameSwitcherHelpEnabled"] = true;
 	
 	mBoolMap["SlideshowScreenSaverStretch"] = false;

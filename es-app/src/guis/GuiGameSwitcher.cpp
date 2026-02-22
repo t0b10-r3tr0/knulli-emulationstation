@@ -675,6 +675,8 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 			gameObj.AddMember("included", true, allocator);
 
 		// Save state previews (pre-format labels at cache time)
+		if (Settings::getInstance()->getBool("GameSwitcherSaveStatesEnabled"))
+		{
 		auto* repo = game->getSourceFileData()->getSystem()->getSaveStateRepository();
 		if (repo != nullptr)
 		{
@@ -701,7 +703,7 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 				if (state->slot == -1)
 					label = _("AUTO SAVE") + std::string(" - ") + state->creationDate.toLocalTimeString();
 				else if (supportsIncrementalSS && (state->config != nullptr ? state->config->incremental : incrementalSS))
-					label = state->creationDate.toLocalTimeString();
+					label = _("SAVE STATE") + std::string(" ") + std::to_string(state->slot) + std::string(" - ") + state->creationDate.toLocalTimeString();
 				else
 					label = _("SLOT") + std::string(" ") + std::to_string(state->slot) + std::string(" - ") + state->creationDate.toLocalTimeString();
 
@@ -714,6 +716,7 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 
 			if (saveStatesArr.Size() > 0)
 				gameObj.AddMember("saveStates", saveStatesArr, allocator);
+		}
 		}
 
 		doc.PushBack(gameObj, allocator);
@@ -1227,6 +1230,8 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 		item.currentSaveStateIndex = -1;
 
 		// Populate save state previews
+		if (Settings::getInstance()->getBool("GameSwitcherSaveStatesEnabled"))
+		{
 		auto* repo = game->getSourceFileData()->getSystem()->getSaveStateRepository();
 		if (repo != nullptr)
 		{
@@ -1252,16 +1257,16 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 				preview.slot = state->slot;
 				preview.saveState = state;
 
-				// Build label (matches GuiSaveState formatting)
 				if (state->slot == -1)
 					preview.label = _("AUTO SAVE") + std::string(" - ") + state->creationDate.toLocalTimeString();
 				else if (supportsIncrementalSaveStates && (state->config != nullptr ? state->config->incremental : incrementalSaveStates))
-					preview.label = state->creationDate.toLocalTimeString();
+					preview.label = _("SAVE STATE") + std::string(" ") + std::to_string(state->slot) + std::string(" - ") + state->creationDate.toLocalTimeString();
 				else
 					preview.label = _("SLOT") + std::string(" ") + std::to_string(state->slot) + std::string(" - ") + state->creationDate.toLocalTimeString();
 
 				item.saveStates.push_back(preview);
 			}
+		}
 		}
 
 		mGames.push_back(item);
@@ -2481,6 +2486,14 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 		Settings::getInstance()->setBool("GameSwitcherHelpEnabled", helpEnable->getState());
 	});
 
+	// Save State Browser toggle
+	auto saveStatesEnable = std::make_shared<SwitchComponent>(window);
+	saveStatesEnable->setState(Settings::getInstance()->getBool("GameSwitcherSaveStatesEnabled"));
+	s->addWithDescription(_("ENABLE SAVE STATE BROWSER"), _("Browse save states for each game using the up/down buttons."), saveStatesEnable);
+	s->addSaveFunc([saveStatesEnable] {
+		Settings::getInstance()->setBool("GameSwitcherSaveStatesEnabled", saveStatesEnable->getState());
+	});
+
 	s->addGroup(_("STARTUP"));
 
 	// Boot to Game Switcher toggle
@@ -2518,6 +2531,10 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 			_("REMOVE ALL PINNED GAMES FROM GAME SWITCHER?"),
 			_("YES"), [window]() { GuiGameSwitcher::clearInclusions(); },
 			_("NO"), nullptr));
+	});
+
+	s->addSaveFunc([]() {
+		GuiGameSwitcher::saveCache();
 	});
 
 	window->pushGui(s);
