@@ -2,10 +2,11 @@
 
 #include "Window.h"
 
-class Pico8Installer
+class PortMasterInstaller
 {
 public:
         static void install(Window* window);
+        static bool isInstalled();
         static bool hasInstaller();
 
 };
