@@ -11,6 +11,7 @@ set(ES_HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Genres.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FileFilterIndex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/SystemScreenSaver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/BezelResolver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/CollectionSystemManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/NetworkThread.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ContentInstaller.h
@@ -79,6 +80,7 @@ set(ES_HEADERS
     # Knulli-related GUIs
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/syscalls/DisplaySettings.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/syscalls/SysCalls.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/syscalls/ThreadedRunner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/BoardCheck.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/CapabilityCheck.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/ExtendedGuiSettings.h
@@ -87,6 +89,7 @@ set(ES_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/GuiDisplaySettings.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/GuiPowerManagementSettings.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/Pico8Installer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/PortMasterInstaller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/UsbService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/ThreadedDiskCheck.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/ThreadedSyncthing.h
@@ -136,6 +139,7 @@ set(ES_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Genres.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FileFilterIndex.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/SystemScreenSaver.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/BezelResolver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/CollectionSystemManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/NetworkThread.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ContentInstaller.cpp
@@ -199,6 +203,7 @@ set(ES_SOURCES
     # Knulli-related GUIs
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/syscalls/DisplaySettings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/syscalls/SysCalls.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/syscalls/ThreadedRunner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/BoardCheck.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/CapabilityCheck.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/ExtendedGuiSettings.cpp
@@ -207,6 +212,7 @@ set(ES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/GuiDisplaySettings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/GuiPowerManagementSettings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/Pico8Installer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/PortMasterInstaller.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/UsbService.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/ThreadedDiskCheck.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/ThreadedSyncthing.cpp
